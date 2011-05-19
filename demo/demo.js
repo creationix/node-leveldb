@@ -3,10 +3,15 @@ var leveldb = require('../build/default/leveldb.node'),
     Iterator = leveldb.Iterator,
     WriteBatch = leveldb.WriteBatch;
 
+console.dir(LevelDB);
+var path = __dirname + "/testdb";
 var db = new LevelDB();
 console.log("Opening...");
-var status = db.openSync(__dirname + "/testdb", {});
+var status = db.openSync(path, {});
 console.dir(status);
 console.log("Closing...");
 db.closeSync();
-console.log("done");
+console.log("Destroying...");
+var status = LevelDB.destroyDB(path, {});
+console.dir(status);
+
