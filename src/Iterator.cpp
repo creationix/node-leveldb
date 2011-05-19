@@ -3,6 +3,7 @@ class Iterator : ObjectWrap {
   public:
     Iterator() {}
     ~Iterator() {}
+
     static void Init(Handle<Object> target) {
       v8::HandleScope scope; // used by v8 for garbage collection
 
@@ -19,6 +20,21 @@ class Iterator : ObjectWrap {
       // Binding our constructor function to the target variable
       target->Set(String::NewSymbol("Iterator"), Iterator::persistent_function_template->GetFunction());
     }
+
+    // This is our constructor function. It instantiate a C++ Iterator object and returns a Javascript handle to this object.
+    static Handle<Value> New(const Arguments& args) {
+      HandleScope scope;
+      Iterator* Iterator_instance = new Iterator();
+      // Set some default values
+      
+      // Wrap our C++ object as a Javascript object
+      Iterator_instance->Wrap(args.This());
+      
+      // Our constructor function returns a Javascript object which is a wrapper for our C++ object, 
+      // This is the expected behavior when calling a constructor function with the new operator in Javascript.
+      return args.This();
+    }
+
 };
 
 v8::Persistent<FunctionTemplate> Iterator::persistent_function_template;

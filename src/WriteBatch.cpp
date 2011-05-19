@@ -3,6 +3,7 @@ class WriteBatch : ObjectWrap {
   public:
     WriteBatch() {}
     ~WriteBatch() {}
+
     static void Init(Handle<Object> target) {
       v8::HandleScope scope; // used by v8 for garbage collection
 
@@ -19,6 +20,21 @@ class WriteBatch : ObjectWrap {
       // Binding our constructor function to the target variable
       target->Set(String::NewSymbol("WriteBatch"), WriteBatch::persistent_function_template->GetFunction());
     }
+
+    // This is our constructor function. It instantiate a C++ WriteBatch object and returns a Javascript handle to this object.
+    static Handle<Value> New(const Arguments& args) {
+      HandleScope scope;
+      WriteBatch* WriteBatch_instance = new WriteBatch();
+      // Set some default values
+      
+      // Wrap our C++ object as a Javascript object
+      WriteBatch_instance->Wrap(args.This());
+      
+      // Our constructor function returns a Javascript object which is a wrapper for our C++ object, 
+      // This is the expected behavior when calling a constructor function with the new operator in Javascript.
+      return args.This();
+    }
+
 };
 
 v8::Persistent<FunctionTemplate> WriteBatch::persistent_function_template;
