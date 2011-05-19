@@ -28,21 +28,21 @@ class LevelDB : node::ObjectWrap {
       LevelDB::persistent_function_template->SetClassName(v8::String::NewSymbol("LevelDB"));
 
       // Instance methods
-      NODE_SET_PROTOTYPE_METHOD(LevelDB::persistent_function_template, "openSync", OpenSync);
-      NODE_SET_PROTOTYPE_METHOD(LevelDB::persistent_function_template, "closeSync", CloseSync);
-      NODE_SET_PROTOTYPE_METHOD(LevelDB::persistent_function_template, "putSync", PutSync);
-      NODE_SET_PROTOTYPE_METHOD(LevelDB::persistent_function_template, "delSync", DelSync);
-      NODE_SET_PROTOTYPE_METHOD(LevelDB::persistent_function_template, "writeSync", WriteSync);
-      NODE_SET_PROTOTYPE_METHOD(LevelDB::persistent_function_template, "getSync", GetSync);
-      NODE_SET_PROTOTYPE_METHOD(LevelDB::persistent_function_template, "newIterator", NewSync);
+      NODE_SET_PROTOTYPE_METHOD(LevelDB::persistent_function_template, "open", Open);
+      NODE_SET_PROTOTYPE_METHOD(LevelDB::persistent_function_template, "close", Close);
+      NODE_SET_PROTOTYPE_METHOD(LevelDB::persistent_function_template, "put", Put);
+      NODE_SET_PROTOTYPE_METHOD(LevelDB::persistent_function_template, "del", Del);
+      NODE_SET_PROTOTYPE_METHOD(LevelDB::persistent_function_template, "write", Write);
+      NODE_SET_PROTOTYPE_METHOD(LevelDB::persistent_function_template, "get", Get);
+      NODE_SET_PROTOTYPE_METHOD(LevelDB::persistent_function_template, "newIterator", NewIterator);
       NODE_SET_PROTOTYPE_METHOD(LevelDB::persistent_function_template, "getSnapshot", GetSnapshot);
       NODE_SET_PROTOTYPE_METHOD(LevelDB::persistent_function_template, "releaseSnapshot", ReleaseSnapshot);
       NODE_SET_PROTOTYPE_METHOD(LevelDB::persistent_function_template, "getProperty", GetProperty);
       NODE_SET_PROTOTYPE_METHOD(LevelDB::persistent_function_template, "getApproximateSizes", GetApproximateSizes);
 
       // Static methods
-      NODE_SET_METHOD(LevelDB::persistent_function_template, "destroyDBSync", DestroyDB);
-      NODE_SET_METHOD(LevelDB::persistent_function_template, "repairDBSync", RepairDB);
+      NODE_SET_METHOD(LevelDB::persistent_function_template, "destroyDB", DestroyDB);
+      NODE_SET_METHOD(LevelDB::persistent_function_template, "repairDB", RepairDB);
 
       // Binding our constructor function to the target variable
       target->Set(v8::String::NewSymbol("LevelDB"), LevelDB::persistent_function_template->GetFunction());
@@ -66,7 +66,7 @@ class LevelDB : node::ObjectWrap {
 
     // notification.send();
     // This is a method part of the constructor function's prototype
-    static v8::Handle<v8::Value> OpenSync(const v8::Arguments& args) {
+    static v8::Handle<v8::Value> Open(const v8::Arguments& args) {
       v8::HandleScope scope;
       // Extract C++ object reference from "this" aka args.This() argument
       LevelDB* db_instance = node::ObjectWrap::Unwrap<LevelDB>(args.This());
@@ -89,7 +89,7 @@ class LevelDB : node::ObjectWrap {
 
     // notification.send();
     // This is a method part of the constructor function's prototype
-    static v8::Handle<v8::Value> CloseSync(const v8::Arguments& args) {
+    static v8::Handle<v8::Value> Close(const v8::Arguments& args) {
       v8::HandleScope scope;
       // Extract C++ object reference from "this" aka args.This() argument
       LevelDB* db_instance = node::ObjectWrap::Unwrap<LevelDB>(args.This());
@@ -132,24 +132,24 @@ class LevelDB : node::ObjectWrap {
 
     }
 
-    static v8::Handle<v8::Value> PutSync(const v8::Arguments& args) {
+    static v8::Handle<v8::Value> Put(const v8::Arguments& args) {
       v8::HandleScope scope;
       return ThrowException(Exception::TypeError(String::New("TODO: IMPLEMENT ME")));
     }
-    static v8::Handle<v8::Value> DelSync(const v8::Arguments& args) {
+    static v8::Handle<v8::Value> Del(const v8::Arguments& args) {
       v8::HandleScope scope;
       return ThrowException(Exception::TypeError(String::New("TODO: IMPLEMENT ME")));
     }
-    static v8::Handle<v8::Value> WriteSync(const v8::Arguments& args) {
+    static v8::Handle<v8::Value> Write(const v8::Arguments& args) {
       v8::HandleScope scope;
       return ThrowException(Exception::TypeError(String::New("TODO: IMPLEMENT ME")));
     }
-    static v8::Handle<v8::Value> GetSync(const v8::Arguments& args) {
+    static v8::Handle<v8::Value> Get(const v8::Arguments& args) {
       v8::HandleScope scope;
       return ThrowException(Exception::TypeError(String::New("TODO: IMPLEMENT ME")));
     }
 
-    static v8::Handle<v8::Value> NewSync(const v8::Arguments& args) {
+    static v8::Handle<v8::Value> NewIterator(const v8::Arguments& args) {
       v8::HandleScope scope;
       return ThrowException(Exception::TypeError(String::New("TODO: IMPLEMENT ME")));
     }

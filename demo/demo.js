@@ -8,14 +8,14 @@ console.dir(LevelDB.prototype);
 var path = __dirname + "/testdb";
 var db = new LevelDB();
 console.log("Opening...");
-var status = db.openSync(path, {});
+var status = db.open(path, {});
 console.dir(status);
 console.log("Closing...");
-db.closeSync();
+db.close();
 console.log("Repairing...");
-var status = LevelDB.repairDBSync(path, {});
+var status = LevelDB.repairDB(path, {});
 console.dir(status);
 console.log("Destroying...");
-var status = LevelDB.destroyDBSync(path, {});
+var status = LevelDB.destroyDB(path, {});
 console.dir(status);
 
