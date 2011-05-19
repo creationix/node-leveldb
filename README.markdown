@@ -10,3 +10,4 @@ Links
  - <https://github.com/pkrumins/node-async/blob/master/async.cpp>
  - <http://syskall.com/how-to-write-your-own-native-nodejs-extension>
  - <https://www.cloudkick.com/blog/2010/aug/23/writing-nodejs-native-extensions/>
+ - <https://github.com/tmpvar/node-irrklang/blob/master/wscript>

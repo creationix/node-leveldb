@@ -1,9 +1,4 @@
-#include <v8.h>
-#include <node.h>
-
-using namespace v8;
-
-class WriteBatch : node:ObjectWrap {
+class WriteBatch : ObjectWrap {
   private:
   public:
     WriteBatch() {}
@@ -12,4 +7,5 @@ class WriteBatch : node:ObjectWrap {
     }
 };
 
+v8::Persistent<FunctionTemplate> WriteBatch::persistent_function_template;
 
