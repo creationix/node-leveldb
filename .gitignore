@@ -1,5 +1,6 @@
 .svn
 *.o
+.lock-wscript
 deps/leveldb/*_test
 deps/leveldb/db_bench
 build

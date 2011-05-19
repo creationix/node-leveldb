@@ -31,6 +31,6 @@ def build(bld):
   node_leveldb.target = "leveldb"
   node_leveldb.uselib = ["pthread"]
   node_leveldb.includes = [leveldbdir, leveldbdir + '/include']
-  node_leveldb.cxxflags = ['-O2', '-DNDEBUG', '-m32', '-DLEVELDB_PLATFORM_POSIX', '-std=c++0x']
+  node_leveldb.cxxflags = ['-O2', '-DNDEBUG', '-DLEVELDB_PLATFORM_POSIX', '-std=c++0x']
 
 
