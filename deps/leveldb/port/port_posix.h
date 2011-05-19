@@ -11,7 +11,7 @@
 #include <pthread.h>
 #include <stdint.h>
 #include <string>
-#include <cstdatomic>
+#include <atomic>
 #include <cstring>
 
 namespace leveldb {
