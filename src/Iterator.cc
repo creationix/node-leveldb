@@ -6,11 +6,14 @@
 using namespace node;
 using namespace v8;
 
-class Iterator : ObjectWrap {
+class Iterator : node::ObjectWrap {
   private:
   public:
     Iterator() {}
     ~Iterator() {}
+
+    // Holds our constructor function
+    static v8::Persistent<FunctionTemplate> persistent_function_template;
 
     static void Init(Handle<Object> target) {
       v8::HandleScope scope; // used by v8 for garbage collection
@@ -45,5 +48,4 @@ class Iterator : ObjectWrap {
 
 };
 
-v8::Persistent<FunctionTemplate> Iterator::persistent_function_template;
 

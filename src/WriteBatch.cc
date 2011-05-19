@@ -6,11 +6,14 @@
 using namespace node;
 using namespace v8;
 
-class WriteBatch : ObjectWrap {
+class WriteBatch : node::ObjectWrap {
   private:
   public:
     WriteBatch() {}
     ~WriteBatch() {}
+
+    // Holds our constructor function
+    static v8::Persistent<FunctionTemplate> persistent_function_template;
 
     static void Init(Handle<Object> target) {
       v8::HandleScope scope; // used by v8 for garbage collection
@@ -45,5 +48,4 @@ class WriteBatch : ObjectWrap {
 
 };
 
-v8::Persistent<FunctionTemplate> WriteBatch::persistent_function_template;
 

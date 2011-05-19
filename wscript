@@ -24,9 +24,9 @@ def clean(ctx):
 
 def build(bld):
   node_leveldb = bld.new_task_gen("cxx", "shlib", "node_addon")
-  node_leveldb.source = bld.glob("src/WriteBatch.cc")
-  node_leveldb.name = "node-leveldb"
-  node_leveldb.target = "node-leveldb"
+  node_leveldb.source = bld.glob("index.cc")
+  node_leveldb.name = "leveldb"
+  node_leveldb.target = "leveldb"
   node_leveldb.uselib = ["leveldb"]
   node_leveldb.includes = [leveldbdir + '/include']
   node_leveldb.cxxflags = ['-O2', '-m32']

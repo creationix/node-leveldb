@@ -6,11 +6,14 @@
 using namespace node;
 using namespace v8;
 
-class LevelDB : ObjectWrap {
+class LevelDB : node::ObjectWrap {
   private:
   public:
     LevelDB() {}
     ~LevelDB() {}
+
+    // Holds our constructor function
+    static v8::Persistent<FunctionTemplate> persistent_function_template;
 
     static void Init(Handle<Object> target) {
       v8::HandleScope scope; // used by v8 for garbage collection
@@ -44,6 +47,4 @@ class LevelDB : ObjectWrap {
     }
 
 };
-
-v8::Persistent<FunctionTemplate> LevelDB::persistent_function_template;
 
