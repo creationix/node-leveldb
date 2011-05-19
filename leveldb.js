@@ -1,8 +1,39 @@
 // Mock implementation in JS to help guide API
 // This is meant to mirror the C++ API, but be JavaScripty
 
-function LevelDB() {
-}
+function LevelDB() {}
+LevelDB.prototype.open = function open(name, options, callback) { /*...*/ };
+LevelDB.prototype.close = function close(callback) { /*...*/ };
+LevelDB.prototype.put = function put(key, value, options, callback) { /*...*/ };
+LevelDB.prototype.del = function del(key, options, callback) { /*...*/ };
+LevelDB.prototype.write = function write(updates, options, callback) { /*...*/ };
+LevelDB.prototype.get = function get(key, options, callback) { /*...*/ };
+LevelDB.prototype.newIterator = function newIterator(options) { /*...*/ };
+LevelDB.prototype.getSnapshot = function getSnapshot() { /*...*/ };
+LevelDB.prototype.releaseSnapshot = function releaseSnapshot(snapshot) { /*...*/ };
+LevelDB.prototype.getProperty = function getProperty(name) { /*...*/ };
+LevelDB.prototype.getApproximateSizes = function releaseSnapshot(ranges) { /*...*/ };
+LevelDB.openDB = function openDB(name, options, callback) { /*...*/ }; // Convience wrapper around constructor and open
+LevelDB.destroyDB = function destroyDB(name, options, callback) { /*...*/ };
+LevelDB.repairDB = function repairDB(name, options, callback) { /*...*/ };
+
+function WriteBatch() {}
+WriteBatch.prototype.put = function put(key, balue) { /*...*/ };
+WriteBatch.prototype.del = function del(key) { /*...*/ };
+WriteBatch.prototype.clear = function clear() { /*...*/ };
+
+function Iterator(options) { /*...*/ }
+Iterator.prototype.isValid  = function isValid() { /*...*/ };
+Iterator.prototype.seekToFirst  = function seekToFirst(callback) { /*...*/ };
+Iterator.prototype.seekToLast  = function seekToLast(callback) { /*...*/ };
+Iterator.prototype.seek  = function seek(target, callback) { /*...*/ };
+Iterator.prototype.next  = function next(callback) { /*...*/ };
+Iterator.prototype.prev  = function prev(callback) { /*...*/ };
+Iterator.prototype.getKey  = function getKey(callback) { /*...*/ };
+Iterator.prototype.getValue  = function getValue(callback) { /*...*/ };
+Iterator.prototype.getStatus  = function getStatus() { /*...*/ };
+Iterator.prototype.registerCleanup = function registerCleanup(callback, arg1, arg2) { /*...*/ };
+
 
 // See options.h (in leveldb) for better descriptions
 
@@ -34,10 +65,7 @@ function LevelDB() {
 // Create a new LevelDB instance database
 var db = new LevelDB();
 
-var options = {
-  create_if_missing: true,
-//  error_if_missing: true
-}
+// `options` is always optional and defaults are assumed if left out
 
 // Opening a database
 db.open("/tmp/testdb", options, function (err, status) {
@@ -46,24 +74,31 @@ db.open("/tmp/testdb", options, function (err, status) {
 });
 
 // Closing a database
-db.close();
+db.close(function (err, status) { /*...*/ });
+
+// Putting a value in the database
+db.put(key, value, options, function (err, status) { /*...*/ });
+
+// Deleting a value from the database
+db.del(key, options, function (err, status) { /*...*/ });
+
+// Write a batch of updates in one call
+db.write(updates, options, function (err, status) { /*...*/ });
 
 // Getting a value from the database
 db.get(key, options, function (err, value, status) { /*...*/ });
 
-// Doing an async write (no disk I/O, fire and forget)
-var status = db.put(key, value); // will throw on error
+// get an iterator
+var iterator = db.newIterator(options);
 
-// Doing an async delete (no disk I/O, fire and forget)
-var status = db.del(key) 
+// get a handle to the current state
+var snapshot = db.getSnapshot();
+// release it when done
+db.releaseSnapshot(snapshot);
 
-// Doing a "sync" (flushed) write
-db.put(key, value, {sync: true}, function (err, status) { /*...*/ });
+var value = db.getProperty(name);
 
+var sized = db.getApproximateSizes(ranges);
 
-// TODO: figure out write_batch
-
-
-
-
-
+LevelDB.destroyDB(name, options, function (err, status) { /*...*/ });
+LevelDB.repairDB(name, options, function (err, status) { /*...*/ });
