@@ -12,6 +12,6 @@ console.dir(status);
 console.log("Closing...");
 db.closeSync();
 console.log("Destroying...");
-var status = LevelDB.destroyDB(path, {});
+var status = LevelDB.destroyDBSync(path, {});
 console.dir(status);
 

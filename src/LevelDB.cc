@@ -32,7 +32,7 @@ class LevelDB : node::ObjectWrap {
       NODE_SET_PROTOTYPE_METHOD(LevelDB::persistent_function_template, "closeSync", CloseSync);
 
       // Static methods
-      NODE_SET_METHOD(LevelDB::persistent_function_template, "destroyDB", DestroyDB);
+      NODE_SET_METHOD(LevelDB::persistent_function_template, "destroyDBSync", DestroyDB);
 
       // Binding our constructor function to the target variable
       target->Set(v8::String::NewSymbol("LevelDB"), LevelDB::persistent_function_template->GetFunction());
