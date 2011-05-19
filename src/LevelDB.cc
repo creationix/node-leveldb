@@ -4,7 +4,7 @@
 #include "leveldb/db.h"
 
 //using namespace node;
-//using namespace v8;
+using namespace v8;
 
 class LevelDB : node::ObjectWrap {
   private:
@@ -30,7 +30,8 @@ class LevelDB : node::ObjectWrap {
       // Our getters and setters
 
       // Our methods
-      NODE_SET_PROTOTYPE_METHOD(LevelDB::persistent_function_template, "open", Open);
+      NODE_SET_PROTOTYPE_METHOD(LevelDB::persistent_function_template, "openSync", OpenSync);
+      NODE_SET_PROTOTYPE_METHOD(LevelDB::persistent_function_template, "closeSync", CloseSync);
 
       // Binding our constructor function to the target variable
       target->Set(v8::String::NewSymbol("LevelDB"), LevelDB::persistent_function_template->GetFunction());
@@ -54,7 +55,7 @@ class LevelDB : node::ObjectWrap {
 
     // notification.send();
     // This is a method part of the constructor function's prototype
-    static v8::Handle<v8::Value> Open(const v8::Arguments& args) {
+    static v8::Handle<v8::Value> OpenSync(const v8::Arguments& args) {
       v8::HandleScope scope;
       // Extract C++ object reference from "this" aka args.This() argument
       LevelDB* db_instance = node::ObjectWrap::Unwrap<LevelDB>(args.This());
@@ -62,21 +63,31 @@ class LevelDB : node::ObjectWrap {
       // Convert first argument to V8 String
       v8::String::Utf8Value name(args[0]);
 
+      // TODO: parse options from user and not hard-code them
       leveldb::Options options;
       options.create_if_missing = true;
       
       leveldb::Status status = leveldb::DB::Open(options, *name, &(db_instance->db));
-      
-//      if (status.ok()) {
-//        assert(status.ok());
-//      } else {
-//        return ThrowException(Exception::TypeError(String::New("Some Error")));
-//      }
 
-      // Return value
-      return v8::Boolean::New(true);
+      if (status.ok()) {
+        return String::New(status.ToString().c_str());
+      } else {
+        return ThrowException(Exception::TypeError(String::New(status.ToString().c_str())));
+      }
     }
     
+    // notification.send();
+    // This is a method part of the constructor function's prototype
+    static v8::Handle<v8::Value> CloseSync(const v8::Arguments& args) {
+      v8::HandleScope scope;
+      // Extract C++ object reference from "this" aka args.This() argument
+      LevelDB* db_instance = node::ObjectWrap::Unwrap<LevelDB>(args.This());
+      
+      delete db_instance->db;
+      
+      return Undefined();
+    }
+
 
 };
 
