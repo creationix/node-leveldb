@@ -4,8 +4,15 @@ var leveldb = require('../build/default/leveldb.node'),
     WriteBatch = leveldb.WriteBatch;
 
 var db = new LevelDB();
-db.open("test.db", {}, function (err, status) {
+console.log("Opening...");
+db.open(__dirname + "/testdb", {}, function (err, status) {
   if (err) throw err;
   console.log(status);
+  console.log("Closing...");
+  db.close(function (err, status) {
+    if (err) throw err;
+    console.log(status);
+    console.log("Done");
+  });
 });
 
