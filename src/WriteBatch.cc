@@ -1,3 +1,11 @@
+#include <v8.h>
+#include <node.h>
+
+#include "leveldb/db.h"
+
+using namespace node;
+using namespace v8;
+
 class WriteBatch : ObjectWrap {
   private:
   public:
