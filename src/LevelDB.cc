@@ -33,6 +33,7 @@ class LevelDB : node::ObjectWrap {
 
       // Static methods
       NODE_SET_METHOD(LevelDB::persistent_function_template, "destroyDBSync", DestroyDB);
+      NODE_SET_METHOD(LevelDB::persistent_function_template, "repairDBSync", RepairDB);
 
       // Binding our constructor function to the target variable
       target->Set(v8::String::NewSymbol("LevelDB"), LevelDB::persistent_function_template->GetFunction());
@@ -97,6 +98,22 @@ class LevelDB : node::ObjectWrap {
 
 
       leveldb::Status status = leveldb::DestroyDB(*name, options);
+
+      if (status.ok()) {
+        return String::New(status.ToString().c_str());
+      } else {
+        return ThrowException(Exception::TypeError(String::New(status.ToString().c_str())));
+      }
+
+    }
+
+    static v8::Handle<v8::Value> RepairDB(const v8::Arguments& args) {
+      v8::HandleScope scope;
+
+      v8::String::Utf8Value name(args[0]);
+      leveldb::Options options;
+
+      leveldb::Status status = leveldb::RepairDB(*name, options);
 
       if (status.ok()) {
         return String::New(status.ToString().c_str());
