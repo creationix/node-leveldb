@@ -4,6 +4,7 @@ var leveldb = require('../build/default/leveldb.node'),
     WriteBatch = leveldb.WriteBatch;
 
 console.dir(LevelDB);
+console.dir(LevelDB.prototype);
 var path = __dirname + "/testdb";
 var db = new LevelDB();
 console.log("Opening...");

@@ -30,6 +30,15 @@ class LevelDB : node::ObjectWrap {
       // Instance methods
       NODE_SET_PROTOTYPE_METHOD(LevelDB::persistent_function_template, "openSync", OpenSync);
       NODE_SET_PROTOTYPE_METHOD(LevelDB::persistent_function_template, "closeSync", CloseSync);
+      NODE_SET_PROTOTYPE_METHOD(LevelDB::persistent_function_template, "putSync", PutSync);
+      NODE_SET_PROTOTYPE_METHOD(LevelDB::persistent_function_template, "delSync", DelSync);
+      NODE_SET_PROTOTYPE_METHOD(LevelDB::persistent_function_template, "writeSync", WriteSync);
+      NODE_SET_PROTOTYPE_METHOD(LevelDB::persistent_function_template, "getSync", GetSync);
+      NODE_SET_PROTOTYPE_METHOD(LevelDB::persistent_function_template, "newIterator", NewSync);
+      NODE_SET_PROTOTYPE_METHOD(LevelDB::persistent_function_template, "getSnapshot", GetSnapshot);
+      NODE_SET_PROTOTYPE_METHOD(LevelDB::persistent_function_template, "releaseSnapshot", ReleaseSnapshot);
+      NODE_SET_PROTOTYPE_METHOD(LevelDB::persistent_function_template, "getProperty", GetProperty);
+      NODE_SET_PROTOTYPE_METHOD(LevelDB::persistent_function_template, "getApproximateSizes", GetApproximateSizes);
 
       // Static methods
       NODE_SET_METHOD(LevelDB::persistent_function_template, "destroyDBSync", DestroyDB);
@@ -123,6 +132,43 @@ class LevelDB : node::ObjectWrap {
 
     }
 
+    static v8::Handle<v8::Value> PutSync(const v8::Arguments& args) {
+      v8::HandleScope scope;
+      return ThrowException(Exception::TypeError(String::New("TODO: IMPLEMENT ME")));
+    }
+    static v8::Handle<v8::Value> DelSync(const v8::Arguments& args) {
+      v8::HandleScope scope;
+      return ThrowException(Exception::TypeError(String::New("TODO: IMPLEMENT ME")));
+    }
+    static v8::Handle<v8::Value> WriteSync(const v8::Arguments& args) {
+      v8::HandleScope scope;
+      return ThrowException(Exception::TypeError(String::New("TODO: IMPLEMENT ME")));
+    }
+    static v8::Handle<v8::Value> GetSync(const v8::Arguments& args) {
+      v8::HandleScope scope;
+      return ThrowException(Exception::TypeError(String::New("TODO: IMPLEMENT ME")));
+    }
+
+    static v8::Handle<v8::Value> NewSync(const v8::Arguments& args) {
+      v8::HandleScope scope;
+      return ThrowException(Exception::TypeError(String::New("TODO: IMPLEMENT ME")));
+    }
+    static v8::Handle<v8::Value> GetSnapshot(const v8::Arguments& args) {
+      v8::HandleScope scope;
+      return ThrowException(Exception::TypeError(String::New("TODO: IMPLEMENT ME")));
+    }
+    static v8::Handle<v8::Value> ReleaseSnapshot(const v8::Arguments& args) {
+      v8::HandleScope scope;
+      return ThrowException(Exception::TypeError(String::New("TODO: IMPLEMENT ME")));
+    }
+    static v8::Handle<v8::Value> GetProperty(const v8::Arguments& args) {
+      v8::HandleScope scope;
+      return ThrowException(Exception::TypeError(String::New("TODO: IMPLEMENT ME")));
+    }
+    static v8::Handle<v8::Value> GetApproximateSizes(const v8::Arguments& args) {
+      v8::HandleScope scope;
+      return ThrowException(Exception::TypeError(String::New("TODO: IMPLEMENT ME")));
+    }
 
 };
 
