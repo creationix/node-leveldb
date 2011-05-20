@@ -38,6 +38,12 @@ class LevelDB : node::ObjectWrap {
     }
 
     static Handle<Value> processStatus(leveldb::Status status) {
+      if (status.ok()) {
+        return String::New(status.ToString().c_str());
+      } else {
+        return ThrowException(Exception::TypeError(String::New(status.ToString().c_str())));
+      }
+
     }
 
 
@@ -105,17 +111,10 @@ class LevelDB : node::ObjectWrap {
       // Get this and arguments
       LevelDB* self = node::ObjectWrap::Unwrap<LevelDB>(args.This());
       String::Utf8Value name(args[0]);
-      Local<Object> opts = Object::Cast(*args[1]);
+      Local<Object> options = Object::Cast(*args[1]);
 
       // Do actual work
-      leveldb::Status status = leveldb::DB::Open(processOptions(opts), *name, &(self->db));
-
-      // Return result or exception
-      if (status.ok()) {
-        return String::New(status.ToString().c_str());
-      } else {
-        return ThrowException(Exception::Error(String::New(status.ToString().c_str())));
-      }
+      return processStatus(leveldb::DB::Open(processOptions(options), *name, &(self->db)));
     }
 
     static Handle<Value> Close(const Arguments& args) {
@@ -141,35 +140,24 @@ class LevelDB : node::ObjectWrap {
         return ThrowException(Exception::TypeError(String::New("Invalid arguments: Expected (String, Object)")));
       }
 
-
       String::Utf8Value name(args[0]);
-      leveldb::Options options;
+      Local<Object> options = Object::Cast(*args[1]);
 
-
-      leveldb::Status status = leveldb::DestroyDB(*name, options);
-
-      if (status.ok()) {
-        return String::New(status.ToString().c_str());
-      } else {
-        return ThrowException(Exception::TypeError(String::New(status.ToString().c_str())));
-      }
-
+      return processStatus(leveldb::DestroyDB(*name, processOptions(options)));
     }
 
     static Handle<Value> RepairDB(const Arguments& args) {
       HandleScope scope;
 
-      String::Utf8Value name(args[0]);
-      leveldb::Options options;
-
-      leveldb::Status status = leveldb::RepairDB(*name, options);
-
-      if (status.ok()) {
-        return String::New(status.ToString().c_str());
-      } else {
-        return ThrowException(Exception::TypeError(String::New(status.ToString().c_str())));
+      // Check args
+      if (!(args.Length() == 2 && args[0]->IsString() && args[1]->IsObject())) {
+        return ThrowException(Exception::TypeError(String::New("Invalid arguments: Expected (String, Object)")));
       }
 
+      String::Utf8Value name(args[0]);
+      Local<Object> options = Object::Cast(*args[1]);
+
+      return processStatus(leveldb::RepairDB(*name, processOptions(options)));
     }
 
     static Handle<Value> Put(const Arguments& args) {
