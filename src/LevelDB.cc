@@ -80,7 +80,6 @@ class LevelDB : node::ObjectWrap {
       String::Utf8Value name(args[0]);
       Local<Object> opts = Object::Cast(*args[1]);
 
-      // TODO: parse options from user and not hard-code them
       leveldb::Options options;
       if (opts->Has(String::New("create_if_missing"))) {
         options.create_if_missing = opts->Get(String::New("create_if_missing"))->BooleanValue();
