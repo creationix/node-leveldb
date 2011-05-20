@@ -10,6 +10,37 @@ class LevelDB : node::ObjectWrap {
   private:
     leveldb::DB* db;
 
+    static leveldb::Options processOptions(Local<Object> opts) {
+      // Copy the v8 options over an leveldb options object
+      leveldb::Options options;
+      if (opts->Has(String::New("create_if_missing"))) {
+        options.create_if_missing = opts->Get(String::New("create_if_missing"))->BooleanValue();
+      }
+      if (opts->Has(String::New("error_if_exists"))) {
+        options.error_if_exists = opts->Get(String::New("error_if_exists"))->BooleanValue();
+      }
+      if (opts->Has(String::New("paranoid_checks"))) {
+        options.paranoid_checks = opts->Get(String::New("paranoid_checks"))->BooleanValue();
+      }
+      if (opts->Has(String::New("write_buffer_size"))) {
+        options.write_buffer_size = opts->Get(String::New("write_buffer_size"))->Int32Value();
+      }
+      if (opts->Has(String::New("max_open_files"))) {
+        options.max_open_files = opts->Get(String::New("max_open_files"))->Int32Value();
+      }
+      if (opts->Has(String::New("block_size"))) {
+        options.block_size = opts->Get(String::New("block_size"))->Int32Value();
+      }
+      if (opts->Has(String::New("block_restart_interval"))) {
+        options.block_restart_interval = opts->Get(String::New("block_restart_interval"))->Int32Value();
+      }
+      return options;
+    }
+
+    static Handle<Value> processStatus(leveldb::Status status) {
+    }
+
+
   public:
     LevelDB() {}
     ~LevelDB() {}
@@ -63,9 +94,6 @@ class LevelDB : node::ObjectWrap {
       return args.This();
     }
 
-
-    // notification.send();
-    // This is a method part of the constructor function's prototype
     static Handle<Value> Open(const Arguments& args) {
       HandleScope scope;
 
@@ -75,36 +103,14 @@ class LevelDB : node::ObjectWrap {
       }
 
       // Get this and arguments
-      // Extract C++ object reference from "this" aka args.This() argument
       LevelDB* self = node::ObjectWrap::Unwrap<LevelDB>(args.This());
       String::Utf8Value name(args[0]);
       Local<Object> opts = Object::Cast(*args[1]);
 
-      leveldb::Options options;
-      if (opts->Has(String::New("create_if_missing"))) {
-        options.create_if_missing = opts->Get(String::New("create_if_missing"))->BooleanValue();
-      }
-      if (opts->Has(String::New("error_if_exists"))) {
-        options.error_if_exists = opts->Get(String::New("error_if_exists"))->BooleanValue();
-      }
-      if (opts->Has(String::New("paranoid_checks"))) {
-        options.paranoid_checks = opts->Get(String::New("paranoid_checks"))->BooleanValue();
-      }
-      if (opts->Has(String::New("write_buffer_size"))) {
-        options.write_buffer_size = opts->Get(String::New("write_buffer_size"))->Int32Value();
-      }
-      if (opts->Has(String::New("max_open_files"))) {
-        options.max_open_files = opts->Get(String::New("max_open_files"))->Int32Value();
-      }
-      if (opts->Has(String::New("block_size"))) {
-        options.block_size = opts->Get(String::New("block_size"))->Int32Value();
-      }
-      if (opts->Has(String::New("block_restart_interval"))) {
-        options.block_restart_interval = opts->Get(String::New("block_restart_interval"))->Int32Value();
-      }
+      // Do actual work
+      leveldb::Status status = leveldb::DB::Open(processOptions(opts), *name, &(self->db));
 
-      leveldb::Status status = leveldb::DB::Open(options, *name, &(self->db));
-
+      // Return result or exception
       if (status.ok()) {
         return String::New(status.ToString().c_str());
       } else {
@@ -112,20 +118,29 @@ class LevelDB : node::ObjectWrap {
       }
     }
 
-    // notification.send();
-    // This is a method part of the constructor function's prototype
     static Handle<Value> Close(const Arguments& args) {
       HandleScope scope;
-      // Extract C++ object reference from "this" aka args.This() argument
-      LevelDB* db_instance = node::ObjectWrap::Unwrap<LevelDB>(args.This());
 
-      delete db_instance->db;
+      // Check args
+      if (!(args.Length() == 0)) {
+        return ThrowException(Exception::TypeError(String::New("Invalid arguments: Expected ()")));
+      }
+
+      LevelDB* self = node::ObjectWrap::Unwrap<LevelDB>(args.This());
+
+      delete self->db;
 
       return Undefined();
     }
 
     static Handle<Value> DestroyDB(const Arguments& args) {
       HandleScope scope;
+
+      // Check args
+      if (!(args.Length() == 2 && args[0]->IsString() && args[1]->IsObject())) {
+        return ThrowException(Exception::TypeError(String::New("Invalid arguments: Expected (String, Object)")));
+      }
+
 
       String::Utf8Value name(args[0]);
       leveldb::Options options;
