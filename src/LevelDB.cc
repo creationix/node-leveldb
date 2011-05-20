@@ -16,16 +16,16 @@ class LevelDB : node::ObjectWrap {
 
 
     // Holds our constructor function
-    static v8::Persistent<v8::FunctionTemplate> persistent_function_template;
+    static Persistent<FunctionTemplate> persistent_function_template;
 
-    static void Init(v8::Handle<v8::Object> target) {
-      v8::HandleScope scope; // used by v8 for garbage collection
+    static void Init(Handle<Object> target) {
+      HandleScope scope; // used by v8 for garbage collection
 
       // Our constructor
-      v8::Local<v8::FunctionTemplate> local_function_template = v8::FunctionTemplate::New(New);
-      LevelDB::persistent_function_template = v8::Persistent<v8::FunctionTemplate>::New(local_function_template);
+      Local<FunctionTemplate> local_function_template = FunctionTemplate::New(New);
+      LevelDB::persistent_function_template = Persistent<FunctionTemplate>::New(local_function_template);
       LevelDB::persistent_function_template->InstanceTemplate()->SetInternalFieldCount(1); // 1 since this is a constructor function
-      LevelDB::persistent_function_template->SetClassName(v8::String::NewSymbol("LevelDB"));
+      LevelDB::persistent_function_template->SetClassName(String::NewSymbol("LevelDB"));
 
       // Instance methods
       NODE_SET_PROTOTYPE_METHOD(LevelDB::persistent_function_template, "open", Open);
@@ -45,12 +45,12 @@ class LevelDB : node::ObjectWrap {
       NODE_SET_METHOD(LevelDB::persistent_function_template, "repairDB", RepairDB);
 
       // Binding our constructor function to the target variable
-      target->Set(v8::String::NewSymbol("LevelDB"), LevelDB::persistent_function_template->GetFunction());
+      target->Set(String::NewSymbol("LevelDB"), LevelDB::persistent_function_template->GetFunction());
     }
 
     // This is our constructor function. It instantiate a C++ LevelDB object and returns a Javascript handle to this object.
-    static v8::Handle<v8::Value> New(const v8::Arguments& args) {
-      v8::HandleScope scope;
+    static Handle<Value> New(const Arguments& args) {
+      HandleScope scope;
       LevelDB* LevelDB_instance = new LevelDB();
       // Set some default values
 
@@ -66,31 +66,57 @@ class LevelDB : node::ObjectWrap {
 
     // notification.send();
     // This is a method part of the constructor function's prototype
-    static v8::Handle<v8::Value> Open(const v8::Arguments& args) {
-      v8::HandleScope scope;
-      // Extract C++ object reference from "this" aka args.This() argument
-      LevelDB* db_instance = node::ObjectWrap::Unwrap<LevelDB>(args.This());
+    static Handle<Value> Open(const Arguments& args) {
+      HandleScope scope;
 
-      // Convert first argument to V8 String
-      v8::String::Utf8Value name(args[0]);
+      // Check args
+      if (!(args.Length() == 2 && args[0]->IsString() && args[1]->IsObject())) {
+        return ThrowException(Exception::TypeError(String::New("Invalid arguments: Expected (String, Object)")));
+      }
+
+      // Get this and arguments
+      // Extract C++ object reference from "this" aka args.This() argument
+      LevelDB* self = node::ObjectWrap::Unwrap<LevelDB>(args.This());
+      String::Utf8Value name(args[0]);
+      Local<Object> opts = Object::Cast(*args[1]);
 
       // TODO: parse options from user and not hard-code them
       leveldb::Options options;
-      options.create_if_missing = true;
+      if (opts->Has(String::New("create_if_missing"))) {
+        options.create_if_missing = opts->Get(String::New("create_if_missing"))->BooleanValue();
+      }
+      if (opts->Has(String::New("error_if_exists"))) {
+        options.error_if_exists = opts->Get(String::New("error_if_exists"))->BooleanValue();
+      }
+      if (opts->Has(String::New("paranoid_checks"))) {
+        options.paranoid_checks = opts->Get(String::New("paranoid_checks"))->BooleanValue();
+      }
+      if (opts->Has(String::New("write_buffer_size"))) {
+        options.write_buffer_size = opts->Get(String::New("write_buffer_size"))->Int32Value();
+      }
+      if (opts->Has(String::New("max_open_files"))) {
+        options.max_open_files = opts->Get(String::New("max_open_files"))->Int32Value();
+      }
+      if (opts->Has(String::New("block_size"))) {
+        options.block_size = opts->Get(String::New("block_size"))->Int32Value();
+      }
+      if (opts->Has(String::New("block_restart_interval"))) {
+        options.block_restart_interval = opts->Get(String::New("block_restart_interval"))->Int32Value();
+      }
 
-      leveldb::Status status = leveldb::DB::Open(options, *name, &(db_instance->db));
+      leveldb::Status status = leveldb::DB::Open(options, *name, &(self->db));
 
       if (status.ok()) {
         return String::New(status.ToString().c_str());
       } else {
-        return ThrowException(Exception::TypeError(String::New(status.ToString().c_str())));
+        return ThrowException(Exception::Error(String::New(status.ToString().c_str())));
       }
     }
 
     // notification.send();
     // This is a method part of the constructor function's prototype
-    static v8::Handle<v8::Value> Close(const v8::Arguments& args) {
-      v8::HandleScope scope;
+    static Handle<Value> Close(const Arguments& args) {
+      HandleScope scope;
       // Extract C++ object reference from "this" aka args.This() argument
       LevelDB* db_instance = node::ObjectWrap::Unwrap<LevelDB>(args.This());
 
@@ -99,10 +125,10 @@ class LevelDB : node::ObjectWrap {
       return Undefined();
     }
 
-    static v8::Handle<v8::Value> DestroyDB(const v8::Arguments& args) {
-      v8::HandleScope scope;
+    static Handle<Value> DestroyDB(const Arguments& args) {
+      HandleScope scope;
 
-      v8::String::Utf8Value name(args[0]);
+      String::Utf8Value name(args[0]);
       leveldb::Options options;
 
 
@@ -116,10 +142,10 @@ class LevelDB : node::ObjectWrap {
 
     }
 
-    static v8::Handle<v8::Value> RepairDB(const v8::Arguments& args) {
-      v8::HandleScope scope;
+    static Handle<Value> RepairDB(const Arguments& args) {
+      HandleScope scope;
 
-      v8::String::Utf8Value name(args[0]);
+      String::Utf8Value name(args[0]);
       leveldb::Options options;
 
       leveldb::Status status = leveldb::RepairDB(*name, options);
@@ -132,41 +158,41 @@ class LevelDB : node::ObjectWrap {
 
     }
 
-    static v8::Handle<v8::Value> Put(const v8::Arguments& args) {
-      v8::HandleScope scope;
+    static Handle<Value> Put(const Arguments& args) {
+      HandleScope scope;
       return ThrowException(Exception::TypeError(String::New("TODO: IMPLEMENT ME")));
     }
-    static v8::Handle<v8::Value> Del(const v8::Arguments& args) {
-      v8::HandleScope scope;
+    static Handle<Value> Del(const Arguments& args) {
+      HandleScope scope;
       return ThrowException(Exception::TypeError(String::New("TODO: IMPLEMENT ME")));
     }
-    static v8::Handle<v8::Value> Write(const v8::Arguments& args) {
-      v8::HandleScope scope;
+    static Handle<Value> Write(const Arguments& args) {
+      HandleScope scope;
       return ThrowException(Exception::TypeError(String::New("TODO: IMPLEMENT ME")));
     }
-    static v8::Handle<v8::Value> Get(const v8::Arguments& args) {
-      v8::HandleScope scope;
+    static Handle<Value> Get(const Arguments& args) {
+      HandleScope scope;
       return ThrowException(Exception::TypeError(String::New("TODO: IMPLEMENT ME")));
     }
 
-    static v8::Handle<v8::Value> NewIterator(const v8::Arguments& args) {
-      v8::HandleScope scope;
+    static Handle<Value> NewIterator(const Arguments& args) {
+      HandleScope scope;
       return ThrowException(Exception::TypeError(String::New("TODO: IMPLEMENT ME")));
     }
-    static v8::Handle<v8::Value> GetSnapshot(const v8::Arguments& args) {
-      v8::HandleScope scope;
+    static Handle<Value> GetSnapshot(const Arguments& args) {
+      HandleScope scope;
       return ThrowException(Exception::TypeError(String::New("TODO: IMPLEMENT ME")));
     }
-    static v8::Handle<v8::Value> ReleaseSnapshot(const v8::Arguments& args) {
-      v8::HandleScope scope;
+    static Handle<Value> ReleaseSnapshot(const Arguments& args) {
+      HandleScope scope;
       return ThrowException(Exception::TypeError(String::New("TODO: IMPLEMENT ME")));
     }
-    static v8::Handle<v8::Value> GetProperty(const v8::Arguments& args) {
-      v8::HandleScope scope;
+    static Handle<Value> GetProperty(const Arguments& args) {
+      HandleScope scope;
       return ThrowException(Exception::TypeError(String::New("TODO: IMPLEMENT ME")));
     }
-    static v8::Handle<v8::Value> GetApproximateSizes(const v8::Arguments& args) {
-      v8::HandleScope scope;
+    static Handle<Value> GetApproximateSizes(const Arguments& args) {
+      HandleScope scope;
       return ThrowException(Exception::TypeError(String::New("TODO: IMPLEMENT ME")));
     }
 
