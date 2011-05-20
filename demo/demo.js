@@ -11,7 +11,11 @@ var path = __dirname + "/testdb";
 var db = new LevelDB();
 
 console.log("Opening...");
-var status = db.open(path, {create_if_missing: true, paranoid_checks: true, error_if_exists: true});
+var status = db.open({create_if_missing: true, paranoid_checks: true}, path);
+console.log(status);
+
+console.log("\nPutting...");
+var status = db.put({}, new Buffer("Hello"), new Buffer("World"));
 console.log(status);
 
 console.log("\nClosing...");

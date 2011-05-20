@@ -1,5 +1,6 @@
 #include <v8.h>
 #include <node.h>
+#include <node_buffer.h>
 
 #include "leveldb/db.h"
 
@@ -10,6 +11,7 @@ class LevelDB : node::ObjectWrap {
   private:
     leveldb::DB* db;
 
+    // Helper to convert a vanilla JS object into a leveldb::Options instance
     static leveldb::Options processOptions(Local<Object> opts) {
       // Copy the v8 options over an leveldb options object
       leveldb::Options options;
@@ -37,13 +39,51 @@ class LevelDB : node::ObjectWrap {
       return options;
     }
 
-    static Handle<Value> processStatus(leveldb::Status status) {
-      if (status.ok()) {
-        return String::New(status.ToString().c_str());
-      } else {
-        return ThrowException(Exception::TypeError(String::New(status.ToString().c_str())));
+    // Helper to convert a vanilla JS object into a leveldb::ReadOptions instance
+    static leveldb::ReadOptions processReadOptions(Local<Object> opts) {
+      // Copy the v8 options over an leveldb options object
+      leveldb::ReadOptions options;
+      if (opts->Has(String::New("verify_checksums"))) {
+        options.verify_checksums = opts->Get(String::New("verify_checksums"))->BooleanValue();
       }
+      if (opts->Has(String::New("fill_cache"))) {
+        options.fill_cache = opts->Get(String::New("fill_cache"))->BooleanValue();
+      }
+      return options;
+    }
 
+    // Helper to convert a vanilla JS object into a leveldb::WriteOptions instance
+    static leveldb::WriteOptions processWriteOptions(Local<Object> opts) {
+      // Copy the v8 options over an leveldb options object
+      leveldb::WriteOptions options;
+      if (opts->Has(String::New("sync"))) {
+        options.sync = opts->Get(String::New("sync"))->BooleanValue();
+      }
+      return options;
+    }
+
+    // Helper to convert a leveldb::Status instance to a V8 return value
+    static Handle<Value> processStatus(leveldb::Status status) {
+      if (status.ok()) return String::New(status.ToString().c_str());
+      return ThrowException(Exception::TypeError(String::New(status.ToString().c_str())));
+    }
+
+    static char* BufferData(node::Buffer *b) {
+      return node::Buffer::Data(b->handle_);
+    }
+
+    static size_t BufferLength(node::Buffer *b) {
+      return node::Buffer::Length(b->handle_);
+    }
+
+    static char* BufferData(v8::Local<v8::Object> buf_obj) {
+      v8::HandleScope scope;
+      return node::Buffer::Data(buf_obj);
+    }
+
+    static size_t BufferLength(v8::Local<v8::Object> buf_obj) {
+      v8::HandleScope scope;
+      return node::Buffer::Length(buf_obj);
     }
 
 
@@ -88,9 +128,8 @@ class LevelDB : node::ObjectWrap {
     // This is our constructor function. It instantiate a C++ LevelDB object and returns a Javascript handle to this object.
     static Handle<Value> New(const Arguments& args) {
       HandleScope scope;
-      LevelDB* LevelDB_instance = new LevelDB();
-      // Set some default values
 
+      LevelDB* LevelDB_instance = new LevelDB();
 
       // Wrap our C++ object as a Javascript object
       LevelDB_instance->Wrap(args.This());
@@ -104,14 +143,14 @@ class LevelDB : node::ObjectWrap {
       HandleScope scope;
 
       // Check args
-      if (!(args.Length() == 2 && args[0]->IsString() && args[1]->IsObject())) {
-        return ThrowException(Exception::TypeError(String::New("Invalid arguments: Expected (String, Object)")));
+      if (!(args.Length() == 2 && args[0]->IsObject() && args[1]->IsString())) {
+        return ThrowException(Exception::TypeError(String::New("Invalid arguments: Expected (Object, String)")));
       }
 
       // Get this and arguments
       LevelDB* self = node::ObjectWrap::Unwrap<LevelDB>(args.This());
-      String::Utf8Value name(args[0]);
-      Local<Object> options = Object::Cast(*args[1]);
+      Local<Object> options = Object::Cast(*args[0]);
+      String::Utf8Value name(args[1]);
 
       // Do actual work
       return processStatus(leveldb::DB::Open(processOptions(options), *name, &(self->db)));
@@ -162,40 +201,53 @@ class LevelDB : node::ObjectWrap {
 
     static Handle<Value> Put(const Arguments& args) {
       HandleScope scope;
-      return ThrowException(Exception::TypeError(String::New("TODO: IMPLEMENT ME")));
+
+      // Check args
+      if (!(args.Length() == 3 && args[0]->IsObject() && args[1]->IsObject() && args[2]->IsObject())) {
+        return ThrowException(Exception::TypeError(String::New("Invalid arguments: Expected (Object, Buffer, Buffer)")));
+      }
+
+      LevelDB* self = node::ObjectWrap::Unwrap<LevelDB>(args.This());
+      Local<Object> options = Object::Cast(*args[0]);
+      Local<Object> key = Object::Cast(*args[1]);
+      Local<Object> value = Object::Cast(*args[2]);
+
+      return processStatus(self->db->Put(processWriteOptions(options), BufferData(key), BufferData(value)));
     }
+
+
     static Handle<Value> Del(const Arguments& args) {
       HandleScope scope;
-      return ThrowException(Exception::TypeError(String::New("TODO: IMPLEMENT ME")));
+      return ThrowException(Exception::Error(String::New("TODO: IMPLEMENT ME")));
     }
     static Handle<Value> Write(const Arguments& args) {
       HandleScope scope;
-      return ThrowException(Exception::TypeError(String::New("TODO: IMPLEMENT ME")));
+      return ThrowException(Exception::Error(String::New("TODO: IMPLEMENT ME")));
     }
     static Handle<Value> Get(const Arguments& args) {
       HandleScope scope;
-      return ThrowException(Exception::TypeError(String::New("TODO: IMPLEMENT ME")));
+      return ThrowException(Exception::Error(String::New("TODO: IMPLEMENT ME")));
     }
 
     static Handle<Value> NewIterator(const Arguments& args) {
       HandleScope scope;
-      return ThrowException(Exception::TypeError(String::New("TODO: IMPLEMENT ME")));
+      return ThrowException(Exception::Error(String::New("TODO: IMPLEMENT ME")));
     }
     static Handle<Value> GetSnapshot(const Arguments& args) {
       HandleScope scope;
-      return ThrowException(Exception::TypeError(String::New("TODO: IMPLEMENT ME")));
+      return ThrowException(Exception::Error(String::New("TODO: IMPLEMENT ME")));
     }
     static Handle<Value> ReleaseSnapshot(const Arguments& args) {
       HandleScope scope;
-      return ThrowException(Exception::TypeError(String::New("TODO: IMPLEMENT ME")));
+      return ThrowException(Exception::Error(String::New("TODO: IMPLEMENT ME")));
     }
     static Handle<Value> GetProperty(const Arguments& args) {
       HandleScope scope;
-      return ThrowException(Exception::TypeError(String::New("TODO: IMPLEMENT ME")));
+      return ThrowException(Exception::Error(String::New("TODO: IMPLEMENT ME")));
     }
     static Handle<Value> GetApproximateSizes(const Arguments& args) {
       HandleScope scope;
-      return ThrowException(Exception::TypeError(String::New("TODO: IMPLEMENT ME")));
+      return ThrowException(Exception::Error(String::New("TODO: IMPLEMENT ME")));
     }
 
 };
