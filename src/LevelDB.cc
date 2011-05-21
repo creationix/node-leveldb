@@ -85,6 +85,12 @@ class LevelDB : ObjectWrap {
       HandleScope scope;
       return Buffer::Length(buf_obj);
     }
+    
+    static leveldb::Slice JsToSlice(Local<Value> val) {
+      Local<Object> obj = Object::Cast(*val);
+      leveldb::Slice slice(BufferData(obj), BufferLength(obj));
+      return slice;
+    }
 
 
   public:
@@ -209,10 +215,10 @@ class LevelDB : ObjectWrap {
 
       LevelDB* self = ObjectWrap::Unwrap<LevelDB>(args.This());
       Local<Object> options = Object::Cast(*args[0]);
-      Local<Object> key = Object::Cast(*args[1]);
-      Local<Object> value = Object::Cast(*args[2]);
+      leveldb::Slice key = JsToSlice(*args[1]);
+      leveldb::Slice value = JsToSlice(*args[2]);
 
-      return processStatus(self->db->Put(processWriteOptions(options), BufferData(key), BufferData(value)));
+      return processStatus(self->db->Put(processWriteOptions(options), key, value));
     }
 
 
@@ -230,11 +236,29 @@ class LevelDB : ObjectWrap {
 
       return processStatus(self->db->Delete(processWriteOptions(options), BufferData(key)));
     }
-    static Handle<Value> Write(const Arguments& args) {
+    
+    static Handle<Value> Get(const Arguments& args) {
       HandleScope scope;
+
+      // Check args
+      if (!(args.Length() == 2 && args[0]->IsObject() && args[1]->IsObject())) {
+        return ThrowException(Exception::TypeError(String::New("Invalid arguments: Expected (Object, Buffer)")));
+      }
+
+      LevelDB* self = ObjectWrap::Unwrap<LevelDB>(args.This());
+      Local<Object> options = Object::Cast(*args[0]);
+      Local<Object> key = Object::Cast(*args[1]);
+
+      std::string value;
+      leveldb::Status status = self->db->Get(processReadOptions(options), BufferData(key), &value);
+
+      if (status.ok()) return String::New(status.ToString().c_str());
+      return ThrowException(Exception::TypeError(String::New(status.ToString().c_str())));
+
       return ThrowException(Exception::Error(String::New("TODO: IMPLEMENT ME")));
     }
-    static Handle<Value> Get(const Arguments& args) {
+
+    static Handle<Value> Write(const Arguments& args) {
       HandleScope scope;
       return ThrowException(Exception::Error(String::New("TODO: IMPLEMENT ME")));
     }
