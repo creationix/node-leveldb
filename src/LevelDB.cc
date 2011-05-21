@@ -1,97 +1,10 @@
-#include <v8.h>
-#include <node.h>
-#include <node_buffer.h>
+#include "helpers.cc"
 
-#include "leveldb/db.h"
-
-using namespace node;
-using namespace v8;
+namespace node_leveldb {
 
 class LevelDB : ObjectWrap {
   private:
     leveldb::DB* db;
-
-    // Helper to convert a vanilla JS object into a leveldb::Options instance
-    static leveldb::Options processOptions(Local<Object> opts) {
-      // Copy the v8 options over an leveldb options object
-      leveldb::Options options;
-      if (opts->Has(String::New("create_if_missing"))) {
-        options.create_if_missing = opts->Get(String::New("create_if_missing"))->BooleanValue();
-      }
-      if (opts->Has(String::New("error_if_exists"))) {
-        options.error_if_exists = opts->Get(String::New("error_if_exists"))->BooleanValue();
-      }
-      if (opts->Has(String::New("paranoid_checks"))) {
-        options.paranoid_checks = opts->Get(String::New("paranoid_checks"))->BooleanValue();
-      }
-      if (opts->Has(String::New("write_buffer_size"))) {
-        options.write_buffer_size = opts->Get(String::New("write_buffer_size"))->Int32Value();
-      }
-      if (opts->Has(String::New("max_open_files"))) {
-        options.max_open_files = opts->Get(String::New("max_open_files"))->Int32Value();
-      }
-      if (opts->Has(String::New("block_size"))) {
-        options.block_size = opts->Get(String::New("block_size"))->Int32Value();
-      }
-      if (opts->Has(String::New("block_restart_interval"))) {
-        options.block_restart_interval = opts->Get(String::New("block_restart_interval"))->Int32Value();
-      }
-      return options;
-    }
-
-    // Helper to convert a vanilla JS object into a leveldb::ReadOptions instance
-    static leveldb::ReadOptions JsToReadOptions(Local<Value> val) {
-      leveldb::ReadOptions options;
-      Local<Object> obj = Object::Cast(*val);
-      if (obj->Has(String::New("verify_checksums"))) {
-        options.verify_checksums = obj->Get(String::New("verify_checksums"))->BooleanValue();
-      }
-      if (obj->Has(String::New("fill_cache"))) {
-        options.fill_cache = obj->Get(String::New("fill_cache"))->BooleanValue();
-      }
-      return options;
-    }
-
-    // Helper to convert a vanilla JS object into a leveldb::WriteOptions instance
-    static leveldb::WriteOptions JsToWriteOptions(Local<Value> val) {
-      leveldb::WriteOptions options;
-      Local<Object> obj = Object::Cast(*val);
-      if (obj->Has(String::New("sync"))) {
-        options.sync = obj->Get(String::New("sync"))->BooleanValue();
-      }
-      return options;
-    }
-
-    // Helper to convert a leveldb::Status instance to a V8 return value
-    static Handle<Value> processStatus(leveldb::Status status) {
-      if (status.ok()) return String::New(status.ToString().c_str());
-      return ThrowException(Exception::Error(String::New(status.ToString().c_str())));
-    }
-
-    static char* BufferData(Buffer *b) {
-      return Buffer::Data(b->handle_);
-    }
-
-    static size_t BufferLength(Buffer *b) {
-      return Buffer::Length(b->handle_);
-    }
-
-    static char* BufferData(Local<Object> buf_obj) {
-      HandleScope scope;
-      return Buffer::Data(buf_obj);
-    }
-
-    static size_t BufferLength(Local<Object> buf_obj) {
-      HandleScope scope;
-      return Buffer::Length(buf_obj);
-    }
-
-    static leveldb::Slice JsToSlice(Local<Value> val) {
-      Local<Object> obj = Object::Cast(*val);
-      leveldb::Slice slice(BufferData(obj), BufferLength(obj));
-      return slice;
-    }
-
 
   public:
     LevelDB() {}
@@ -155,11 +68,11 @@ class LevelDB : ObjectWrap {
 
       // Get this and arguments
       LevelDB* self = ObjectWrap::Unwrap<LevelDB>(args.This());
-      Local<Object> options = Object::Cast(*args[0]);
+      leveldb::Options options = JsToOptions(*args[0]);
       String::Utf8Value name(args[1]);
 
       // Do actual work
-      return processStatus(leveldb::DB::Open(processOptions(options), *name, &(self->db)));
+      return processStatus(leveldb::DB::Open(options, *name, &(self->db)));
     }
 
     static Handle<Value> Close(const Arguments& args) {
@@ -186,9 +99,9 @@ class LevelDB : ObjectWrap {
       }
 
       String::Utf8Value name(args[0]);
-      Local<Object> options = Object::Cast(*args[1]);
+      leveldb::Options options = JsToOptions(*args[1]);
 
-      return processStatus(leveldb::DestroyDB(*name, processOptions(options)));
+      return processStatus(leveldb::DestroyDB(*name, options));
     }
 
     static Handle<Value> RepairDB(const Arguments& args) {
@@ -200,9 +113,9 @@ class LevelDB : ObjectWrap {
       }
 
       String::Utf8Value name(args[0]);
-      Local<Object> options = Object::Cast(*args[1]);
+      leveldb::Options options = JsToOptions(*args[1]);
 
-      return processStatus(leveldb::RepairDB(*name, processOptions(options)));
+      return processStatus(leveldb::RepairDB(*name, options));
     }
 
     static Handle<Value> Put(const Arguments& args) {
@@ -292,4 +205,7 @@ class LevelDB : ObjectWrap {
     }
 
 };
+
+}
+
 

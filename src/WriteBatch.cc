@@ -1,13 +1,11 @@
-#include <v8.h>
-#include <node.h>
+#include "helpers.cc"
 
-#include "leveldb/db.h"
-
-using namespace node;
-using namespace v8;
+namespace node_leveldb {
 
 class WriteBatch : node::ObjectWrap {
   private:
+    leveldb::WriteBatch* wb;
+  
   public:
     WriteBatch() {}
     ~WriteBatch() {}
@@ -24,9 +22,10 @@ class WriteBatch : node::ObjectWrap {
       WriteBatch::persistent_function_template->InstanceTemplate()->SetInternalFieldCount(1); // 1 since this is a constructor function
       WriteBatch::persistent_function_template->SetClassName(v8::String::NewSymbol("WriteBatch"));
 
-      // Our getters and setters
-
-      // Our methods
+      // Instance methods
+      NODE_SET_PROTOTYPE_METHOD(WriteBatch::persistent_function_template, "put", Put);
+      NODE_SET_PROTOTYPE_METHOD(WriteBatch::persistent_function_template, "del", Del);
+      NODE_SET_PROTOTYPE_METHOD(WriteBatch::persistent_function_template, "clear", Clear);
 
       // Binding our constructor function to the target variable
       target->Set(String::NewSymbol("WriteBatch"), WriteBatch::persistent_function_template->GetFunction());
@@ -46,6 +45,20 @@ class WriteBatch : node::ObjectWrap {
       return args.This();
     }
 
+    static Handle<Value> Put(const Arguments& args) {
+      HandleScope scope;
+      return ThrowException(Exception::Error(String::New("TODO: IMPLEMENT ME")));
+    }
+    static Handle<Value> Del(const Arguments& args) {
+      HandleScope scope;
+      return ThrowException(Exception::Error(String::New("TODO: IMPLEMENT ME")));
+    }
+    static Handle<Value> Clear(const Arguments& args) {
+      HandleScope scope;
+      return ThrowException(Exception::Error(String::New("TODO: IMPLEMENT ME")));
+    }
+
+
 };
 
-
+}

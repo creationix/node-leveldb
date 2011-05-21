@@ -1,10 +1,6 @@
-#include <v8.h>
-#include <node.h>
+#include "helpers.cc"
 
-#include "leveldb/db.h"
-
-using namespace node;
-using namespace v8;
+namespace node_leveldb {
 
 class Iterator : node::ObjectWrap {
   private:
@@ -48,4 +44,4 @@ class Iterator : node::ObjectWrap {
 
 };
 
-
+}
