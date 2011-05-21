@@ -18,6 +18,10 @@ console.log("\nPutting...");
 var status = db.put({}, new Buffer("Hello"), new Buffer("World"));
 console.log(status);
 
+console.log("\nDeleting...");
+var status = db.del({}, new Buffer("Hello"));
+console.log(status);
+
 console.log("\nClosing...");
 db.close();
 console.log("OK");

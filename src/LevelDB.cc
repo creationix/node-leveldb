@@ -218,7 +218,17 @@ class LevelDB : ObjectWrap {
 
     static Handle<Value> Del(const Arguments& args) {
       HandleScope scope;
-      return ThrowException(Exception::Error(String::New("TODO: IMPLEMENT ME")));
+
+      // Check args
+      if (!(args.Length() == 2 && args[0]->IsObject() && args[1]->IsObject())) {
+        return ThrowException(Exception::TypeError(String::New("Invalid arguments: Expected (Object, Buffer)")));
+      }
+
+      LevelDB* self = ObjectWrap::Unwrap<LevelDB>(args.This());
+      Local<Object> options = Object::Cast(*args[0]);
+      Local<Object> key = Object::Cast(*args[1]);
+
+      return processStatus(self->db->Delete(processWriteOptions(options), BufferData(key)));
     }
     static Handle<Value> Write(const Arguments& args) {
       HandleScope scope;
