@@ -27,11 +27,15 @@ This is the main Class and probably the only one that a user needs to create man
     var LevelDB = require('leveldb.node').LevelDB
     var db = new LevelDB
     db.open({create_if_missing: true}, "path/to/my/db");
-    db.put({sync: true}, new Buffer("myKey"), new Buffer("My Value!"));
+    var key = new Buffer("myKey");
+    db.put({}, key, new Buffer("My Value!"));
+    var value = db.get({}, key);
+    console.dir(value);
+    db.del({}, key);
     db.close();
 
-I'll document more as this stabilizes.  In the mean-time, check out the demo script I use for testing.
-<https://github.com/creationix/node-leveldb/blob/master/demo/demo.js>
+I'll document more as this stabilizes.  In the mean-time, check out the demo scripts I use for testing.
+<https://github.com/creationix/node-leveldb/blob/master/demo>
 
 ## Compiling
 
@@ -57,7 +61,7 @@ Currently Randall Leeds (@tilgovi and one of the CouchDB commiters) has expresse
 
 This is the short-term and long roadmap to track progress.
 
-- Implement just enough to make a simple key/value store. (90% done)
+- Implement just enough to make a simple key/value store. (100% done)
 - Implement bulk writes
 - Implement Iterators
 - Implement Snapstops
