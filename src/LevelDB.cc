@@ -4,10 +4,10 @@
 
 #include "leveldb/db.h"
 
-//using namespace node;
+using namespace node;
 using namespace v8;
 
-class LevelDB : node::ObjectWrap {
+class LevelDB : ObjectWrap {
   private:
     leveldb::DB* db;
 
@@ -68,22 +68,22 @@ class LevelDB : node::ObjectWrap {
       return ThrowException(Exception::TypeError(String::New(status.ToString().c_str())));
     }
 
-    static char* BufferData(node::Buffer *b) {
-      return node::Buffer::Data(b->handle_);
+    static char* BufferData(Buffer *b) {
+      return Buffer::Data(b->handle_);
     }
 
-    static size_t BufferLength(node::Buffer *b) {
-      return node::Buffer::Length(b->handle_);
+    static size_t BufferLength(Buffer *b) {
+      return Buffer::Length(b->handle_);
     }
 
-    static char* BufferData(v8::Local<v8::Object> buf_obj) {
-      v8::HandleScope scope;
-      return node::Buffer::Data(buf_obj);
+    static char* BufferData(Local<Object> buf_obj) {
+      HandleScope scope;
+      return Buffer::Data(buf_obj);
     }
 
-    static size_t BufferLength(v8::Local<v8::Object> buf_obj) {
-      v8::HandleScope scope;
-      return node::Buffer::Length(buf_obj);
+    static size_t BufferLength(Local<Object> buf_obj) {
+      HandleScope scope;
+      return Buffer::Length(buf_obj);
     }
 
 
@@ -148,7 +148,7 @@ class LevelDB : node::ObjectWrap {
       }
 
       // Get this and arguments
-      LevelDB* self = node::ObjectWrap::Unwrap<LevelDB>(args.This());
+      LevelDB* self = ObjectWrap::Unwrap<LevelDB>(args.This());
       Local<Object> options = Object::Cast(*args[0]);
       String::Utf8Value name(args[1]);
 
@@ -164,7 +164,7 @@ class LevelDB : node::ObjectWrap {
         return ThrowException(Exception::TypeError(String::New("Invalid arguments: Expected ()")));
       }
 
-      LevelDB* self = node::ObjectWrap::Unwrap<LevelDB>(args.This());
+      LevelDB* self = ObjectWrap::Unwrap<LevelDB>(args.This());
 
       delete self->db;
 
@@ -207,7 +207,7 @@ class LevelDB : node::ObjectWrap {
         return ThrowException(Exception::TypeError(String::New("Invalid arguments: Expected (Object, Buffer, Buffer)")));
       }
 
-      LevelDB* self = node::ObjectWrap::Unwrap<LevelDB>(args.This());
+      LevelDB* self = ObjectWrap::Unwrap<LevelDB>(args.This());
       Local<Object> options = Object::Cast(*args[0]);
       Local<Object> key = Object::Cast(*args[1]);
       Local<Object> value = Object::Cast(*args[2]);
