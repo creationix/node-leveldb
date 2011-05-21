@@ -33,4 +33,13 @@ def build(bld):
   node_leveldb.includes = [leveldbdir, leveldbdir + '/include']
   node_leveldb.cxxflags = ['-O2', '-DNDEBUG', '-DLEVELDB_PLATFORM_POSIX', '-std=c++0x']
 
+  dumpdata = bld.new_task_gen("cxx", "program")
+  dumpdata.source = ["deps/leveldb" + path for path in leveldbsrc] + ["dumpdata.cc"]
+  dumpdata.name = "leveldbdump"
+  dumpdata.target = "leveldbdump"
+  dumpdata.uselib = ["pthread"]
+  dumpdata.includes = [leveldbdir, leveldbdir + '/include']
+  dumpdata.cxxflags = ['-O2', '-DNDEBUG', '-DLEVELDB_PLATFORM_POSIX', '-std=c++0x', '-lpthread']
+  dumpdata.ldflags = ['-lpthread']
 
+  

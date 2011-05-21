@@ -65,7 +65,7 @@ class LevelDB : ObjectWrap {
     // Helper to convert a leveldb::Status instance to a V8 return value
     static Handle<Value> processStatus(leveldb::Status status) {
       if (status.ok()) return String::New(status.ToString().c_str());
-      return ThrowException(Exception::TypeError(String::New(status.ToString().c_str())));
+      return ThrowException(Exception::Error(String::New(status.ToString().c_str())));
     }
 
     static char* BufferData(Buffer *b) {
@@ -252,7 +252,7 @@ class LevelDB : ObjectWrap {
       // Read value from database
       std::string value;
       leveldb::Status status = self->db->Get(options, key, &value);
-      if (!status.ok()) return ThrowException(Exception::TypeError(String::New(status.ToString().c_str())));
+      if (!status.ok()) return ThrowException(Exception::Error(String::New(status.ToString().c_str())));
 
       // Convert string to real JS Buffer
       int length = value.length();
