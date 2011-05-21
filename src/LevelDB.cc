@@ -40,24 +40,24 @@ class LevelDB : ObjectWrap {
     }
 
     // Helper to convert a vanilla JS object into a leveldb::ReadOptions instance
-    static leveldb::ReadOptions processReadOptions(Local<Object> opts) {
-      // Copy the v8 options over an leveldb options object
+    static leveldb::ReadOptions JsToReadOptions(Local<Value> val) {
       leveldb::ReadOptions options;
-      if (opts->Has(String::New("verify_checksums"))) {
-        options.verify_checksums = opts->Get(String::New("verify_checksums"))->BooleanValue();
+      Local<Object> obj = Object::Cast(*val);
+      if (obj->Has(String::New("verify_checksums"))) {
+        options.verify_checksums = obj->Get(String::New("verify_checksums"))->BooleanValue();
       }
-      if (opts->Has(String::New("fill_cache"))) {
-        options.fill_cache = opts->Get(String::New("fill_cache"))->BooleanValue();
+      if (obj->Has(String::New("fill_cache"))) {
+        options.fill_cache = obj->Get(String::New("fill_cache"))->BooleanValue();
       }
       return options;
     }
 
     // Helper to convert a vanilla JS object into a leveldb::WriteOptions instance
-    static leveldb::WriteOptions processWriteOptions(Local<Object> opts) {
-      // Copy the v8 options over an leveldb options object
+    static leveldb::WriteOptions JsToWriteOptions(Local<Value> val) {
       leveldb::WriteOptions options;
-      if (opts->Has(String::New("sync"))) {
-        options.sync = opts->Get(String::New("sync"))->BooleanValue();
+      Local<Object> obj = Object::Cast(*val);
+      if (obj->Has(String::New("sync"))) {
+        options.sync = obj->Get(String::New("sync"))->BooleanValue();
       }
       return options;
     }
@@ -85,7 +85,7 @@ class LevelDB : ObjectWrap {
       HandleScope scope;
       return Buffer::Length(buf_obj);
     }
-    
+
     static leveldb::Slice JsToSlice(Local<Value> val) {
       Local<Object> obj = Object::Cast(*val);
       leveldb::Slice slice(BufferData(obj), BufferLength(obj));
@@ -209,16 +209,16 @@ class LevelDB : ObjectWrap {
       HandleScope scope;
 
       // Check args
-      if (!(args.Length() == 3 && args[0]->IsObject() && args[1]->IsObject() && args[2]->IsObject())) {
+      if (!(args.Length() == 3 && args[0]->IsObject() && Buffer::HasInstance(args[1]) && Buffer::HasInstance(args[2]))) {
         return ThrowException(Exception::TypeError(String::New("Invalid arguments: Expected (Object, Buffer, Buffer)")));
       }
 
       LevelDB* self = ObjectWrap::Unwrap<LevelDB>(args.This());
-      Local<Object> options = Object::Cast(*args[0]);
+      leveldb::WriteOptions options = JsToWriteOptions(*args[0]);
       leveldb::Slice key = JsToSlice(*args[1]);
       leveldb::Slice value = JsToSlice(*args[2]);
 
-      return processStatus(self->db->Put(processWriteOptions(options), key, value));
+      return processStatus(self->db->Put(options, key, value));
     }
 
 
@@ -226,36 +226,43 @@ class LevelDB : ObjectWrap {
       HandleScope scope;
 
       // Check args
-      if (!(args.Length() == 2 && args[0]->IsObject() && args[1]->IsObject())) {
+      if (!(args.Length() == 2 && args[0]->IsObject() && Buffer::HasInstance(args[1]))) {
         return ThrowException(Exception::TypeError(String::New("Invalid arguments: Expected (Object, Buffer)")));
       }
 
       LevelDB* self = ObjectWrap::Unwrap<LevelDB>(args.This());
-      Local<Object> options = Object::Cast(*args[0]);
+      leveldb::WriteOptions options = JsToWriteOptions(*args[0]);
       leveldb::Slice key = JsToSlice(*args[1]);
 
-      return processStatus(self->db->Delete(processWriteOptions(options), key));
+      return processStatus(self->db->Delete(options, key));
     }
-    
+
     static Handle<Value> Get(const Arguments& args) {
       HandleScope scope;
 
       // Check args
-      if (!(args.Length() == 2 && args[0]->IsObject() && args[1]->IsObject())) {
+      if (!(args.Length() == 2 && args[0]->IsObject() && Buffer::HasInstance(args[1]))) {
         return ThrowException(Exception::TypeError(String::New("Invalid arguments: Expected (Object, Buffer)")));
       }
 
       LevelDB* self = ObjectWrap::Unwrap<LevelDB>(args.This());
-      Local<Object> options = Object::Cast(*args[0]);
-      Local<Object> key = Object::Cast(*args[1]);
+      leveldb::ReadOptions options = JsToReadOptions(*args[0]);
+      leveldb::Slice key = JsToSlice(*args[1]);
 
+      // Read value from database
       std::string value;
-      leveldb::Status status = self->db->Get(processReadOptions(options), BufferData(key), &value);
+      leveldb::Status status = self->db->Get(options, key, &value);
+      if (!status.ok()) return ThrowException(Exception::TypeError(String::New(status.ToString().c_str())));
 
-      if (status.ok()) return String::New(status.ToString().c_str());
-      return ThrowException(Exception::TypeError(String::New(status.ToString().c_str())));
+      // Convert string to real JS Buffer
+      int length = value.length();
+      Buffer *slowBuffer = Buffer::New(length);
+      memcpy(BufferData(slowBuffer), value.c_str(), length);
+      Local<Function> bufferConstructor = Local<Function>::Cast(Context::GetCurrent()->Global()->Get(String::New("Buffer")));
+      Handle<Value> constructorArgs[3] = { slowBuffer->handle_, Integer::New(length), Integer::New(0) };
+      Local<Object> actualBuffer = bufferConstructor->NewInstance(3, constructorArgs);
 
-      return ThrowException(Exception::Error(String::New("TODO: IMPLEMENT ME")));
+      return scope.Close(actualBuffer);
     }
 
     static Handle<Value> Write(const Arguments& args) {
