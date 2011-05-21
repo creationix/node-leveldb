@@ -232,9 +232,9 @@ class LevelDB : ObjectWrap {
 
       LevelDB* self = ObjectWrap::Unwrap<LevelDB>(args.This());
       Local<Object> options = Object::Cast(*args[0]);
-      Local<Object> key = Object::Cast(*args[1]);
+      leveldb::Slice key = JsToSlice(*args[1]);
 
-      return processStatus(self->db->Delete(processWriteOptions(options), BufferData(key)));
+      return processStatus(self->db->Delete(processWriteOptions(options), key));
     }
     
     static Handle<Value> Get(const Arguments& args) {
