@@ -1,3 +1,4 @@
+from os import system
 from os.path import abspath, exists, join
 from shutil import rmtree
 
@@ -15,6 +16,9 @@ def configure(conf):
   conf.check_tool("compiler_cxx")
   conf.check_tool("compiler_cc")
   conf.check_tool("node_addon")
+
+  if not exists(join(leveldbdir, 'build', 'build_config.h')):
+      system('cd %s && sh platform.env' % leveldbdir)
 
 def clean(ctx): 
   if exists("build"): rmtree("build")
