@@ -79,12 +79,10 @@ namespace node_leveldb {
   }
 
   static char* BufferData(Local<Object> buf_obj) {
-    HandleScope scope;
     return Buffer::Data(buf_obj);
   }
 
   static size_t BufferLength(Local<Object> buf_obj) {
-    HandleScope scope;
     return Buffer::Length(buf_obj);
   }
 
