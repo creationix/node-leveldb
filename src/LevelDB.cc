@@ -68,7 +68,7 @@ class LevelDB : ObjectWrap {
 
       // Get this and arguments
       LevelDB* self = ObjectWrap::Unwrap<LevelDB>(args.This());
-      leveldb::Options options = JsToOptions(*args[0]);
+      leveldb::Options options = JsToOptions(args[0]);
       String::Utf8Value name(args[1]);
 
       // Do actual work
@@ -99,7 +99,7 @@ class LevelDB : ObjectWrap {
       }
 
       String::Utf8Value name(args[0]);
-      leveldb::Options options = JsToOptions(*args[1]);
+      leveldb::Options options = JsToOptions(args[1]);
 
       return processStatus(leveldb::DestroyDB(*name, options));
     }
@@ -113,7 +113,7 @@ class LevelDB : ObjectWrap {
       }
 
       String::Utf8Value name(args[0]);
-      leveldb::Options options = JsToOptions(*args[1]);
+      leveldb::Options options = JsToOptions(args[1]);
 
       return processStatus(leveldb::RepairDB(*name, options));
     }
@@ -127,9 +127,9 @@ class LevelDB : ObjectWrap {
       }
 
       LevelDB* self = ObjectWrap::Unwrap<LevelDB>(args.This());
-      leveldb::WriteOptions options = JsToWriteOptions(*args[0]);
-      leveldb::Slice key = JsToSlice(*args[1]);
-      leveldb::Slice value = JsToSlice(*args[2]);
+      leveldb::WriteOptions options = JsToWriteOptions(args[0]);
+      leveldb::Slice key = JsToSlice(args[1]);
+      leveldb::Slice value = JsToSlice(args[2]);
 
       return processStatus(self->db->Put(options, key, value));
     }
@@ -145,7 +145,7 @@ class LevelDB : ObjectWrap {
 
       LevelDB* self = ObjectWrap::Unwrap<LevelDB>(args.This());
       leveldb::WriteOptions options = JsToWriteOptions(*args[0]);
-      leveldb::Slice key = JsToSlice(*args[1]);
+      leveldb::Slice key = JsToSlice(args[1]);
 
       return processStatus(self->db->Delete(options, key));
     }
@@ -159,8 +159,8 @@ class LevelDB : ObjectWrap {
       }
 
       LevelDB* self = ObjectWrap::Unwrap<LevelDB>(args.This());
-      leveldb::ReadOptions options = JsToReadOptions(*args[0]);
-      leveldb::Slice key = JsToSlice(*args[1]);
+      leveldb::ReadOptions options = JsToReadOptions(args[0]);
+      leveldb::Slice key = JsToSlice(args[1]);
 
       // Read value from database
       std::string value;
