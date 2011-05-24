@@ -17,8 +17,7 @@ class RandomAccessFile;
 struct ReadOptions;
 
 // A Table is a sorted map from strings to strings.  Tables are
-// immutable and persistent.  A Table may be safely accessed from
-// multiple threads without external synchronization.
+// immutable and persistent.
 class Table {
  public:
   // Attempt to open the table that is stored in bytes [0..file_size)

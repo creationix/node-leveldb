@@ -4,20 +4,31 @@
 //
 // See port_example.h for documentation for the following types/functions.
 
-#ifndef STORAGE_LEVELDB_PORT_PORT_POSIX_H_
-#define STORAGE_LEVELDB_PORT_PORT_POSIX_H_
+#ifndef STORAGE_LEVELDB_PORT_PORT_STD_H_
+#define STORAGE_LEVELDB_PORT_PORT_STD_H_
 
+#include "build/build_config.h"
+#if defined(OS_MACOSX)
+#include <machine/endian.h>
+#else
 #include <endian.h>
+#endif
 #include <pthread.h>
 #include <stdint.h>
 #include <string>
-#include <cstdatomic>
-#include <cstring>
+#include "base/atomicops.h"
+
+#define fread_unlocked fread
+#define fwrite_unlocked fwrite
+#define fflush_unlocked fflush
+#if defined(OS_MACOSX)
+#define fdatasync fsync
+#endif
 
 namespace leveldb {
 namespace port {
 
-static const bool kLittleEndian = (__BYTE_ORDER == __LITTLE_ENDIAN);
+static const bool kLittleEndian = (BYTE_ORDER == LITTLE_ENDIAN);
 
 class CondVar;
 
@@ -54,21 +65,22 @@ class CondVar {
 // Storage for a lock-free pointer
 class AtomicPointer {
  private:
-  std::atomic<void*> rep_;
+  typedef base::subtle::AtomicWord Rep;
+  Rep rep_;
  public:
   AtomicPointer() { }
-  explicit AtomicPointer(void* v) : rep_(v) { }
+  explicit AtomicPointer(void* p) : rep_(reinterpret_cast<Rep>(p)) {}
   inline void* Acquire_Load() const {
-    return rep_.load(std::memory_order_acquire);
+    return reinterpret_cast<void*>(::base::subtle::Acquire_Load(&rep_));
   }
   inline void Release_Store(void* v) {
-    rep_.store(v, std::memory_order_release);
+    ::base::subtle::Release_Store(&rep_, reinterpret_cast<Rep>(v));
   }
   inline void* NoBarrier_Load() const {
-    return rep_.load(std::memory_order_relaxed);
+    return reinterpret_cast<void*>(::base::subtle::NoBarrier_Load(&rep_));
   }
   inline void NoBarrier_Store(void* v) {
-    rep_.store(v, std::memory_order_relaxed);
+    ::base::subtle::NoBarrier_Store(&rep_, reinterpret_cast<Rep>(v));
   }
 };
 
@@ -91,4 +103,4 @@ inline bool GetHeapProfile(void (*func)(void*, const char*, int), void* arg) {
 }
 }
 
-#endif  // STORAGE_LEVELDB_PORT_PORT_POSIX_H_
+#endif  // STORAGE_LEVELDB_PORT_PORT_STD_H_

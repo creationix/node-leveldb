@@ -12,17 +12,17 @@ namespace leveldb {
 class SnapshotList;
 
 // Snapshots are kept in a doubly-linked list in the DB.
-// Each SnapshotImpl corresponds to a particular sequence number.
-class SnapshotImpl : public Snapshot {
+// Each Snapshot corresponds to a particular sequence number.
+class Snapshot {
  public:
   SequenceNumber number_;  // const after creation
 
  private:
   friend class SnapshotList;
 
-  // SnapshotImpl is kept in a doubly-linked circular list
-  SnapshotImpl* prev_;
-  SnapshotImpl* next_;
+  // Snapshot is kept in a doubly-linked circular list
+  Snapshot* prev_;
+  Snapshot* next_;
 
   SnapshotList* list_;                 // just for sanity checks
 };
@@ -35,11 +35,11 @@ class SnapshotList {
   }
 
   bool empty() const { return list_.next_ == &list_; }
-  SnapshotImpl* oldest() const { assert(!empty()); return list_.next_; }
-  SnapshotImpl* newest() const { assert(!empty()); return list_.prev_; }
+  Snapshot* oldest() const { assert(!empty()); return list_.next_; }
+  Snapshot* newest() const { assert(!empty()); return list_.prev_; }
 
-  const SnapshotImpl* New(SequenceNumber seq) {
-    SnapshotImpl* s = new SnapshotImpl;
+  const Snapshot* New(SequenceNumber seq) {
+    Snapshot* s = new Snapshot;
     s->number_ = seq;
     s->list_ = this;
     s->next_ = &list_;
@@ -49,7 +49,7 @@ class SnapshotList {
     return s;
   }
 
-  void Delete(const SnapshotImpl* s) {
+  void Delete(const Snapshot* s) {
     assert(s->list_ == this);
     s->prev_->next_ = s->next_;
     s->next_->prev_ = s->prev_;
@@ -58,7 +58,7 @@ class SnapshotList {
 
  private:
   // Dummy head of doubly-linked list of snapshots
-  SnapshotImpl list_;
+  Snapshot list_;
 };
 
 }
