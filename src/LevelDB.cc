@@ -144,7 +144,7 @@ class LevelDB : ObjectWrap {
       }
 
       LevelDB* self = ObjectWrap::Unwrap<LevelDB>(args.This());
-      leveldb::WriteOptions options = JsToWriteOptions(*args[0]);
+      leveldb::WriteOptions options = JsToWriteOptions(args[0]);
       leveldb::Slice key = JsToSlice(args[1]);
 
       return processStatus(self->db->Delete(options, key));
