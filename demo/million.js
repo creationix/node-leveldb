@@ -1,8 +1,8 @@
-var LevelDB = require('../build/default/leveldb.node').LevelDB;
+var DB = require('../build/default/leveldb.node').DB;
 
 console.log("Creating test database");
 var path = "/tmp/large.db";
-var db = new LevelDB();
+var db = new DB();
 db.open({create_if_missing: true}, path);
 
 console.log("Serializing and inserting 1,000,000 rows...");
@@ -33,5 +33,5 @@ console.log("%s inserts per second", Math.floor(100000000 / delta));
 
 console.log("Closing and destroying database");
 db.close();
-LevelDB.destroyDB(path, {});
+DB.destroyDB(path, {});
 

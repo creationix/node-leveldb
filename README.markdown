@@ -24,8 +24,8 @@ The API is meant to be an almost one-to-one mapping to the underlying C++ librar
 
 This is the main Class and probably the only one that a user needs to create manually.
 
-    var LevelDB = require('leveldb.node').LevelDB
-    var db = new LevelDB
+    var DB = require('leveldb.node').DB;
+    var db = new DB;
     db.open({create_if_missing: true}, "path/to/my/db");
     var key = new Buffer("myKey");
     db.put({}, key, new Buffer("My Value!"));
