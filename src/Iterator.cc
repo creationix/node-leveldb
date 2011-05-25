@@ -1,4 +1,4 @@
-#include "helpers.cc"
+#include "helpers.h"
 
 namespace node_leveldb {
 

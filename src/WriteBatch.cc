@@ -1,4 +1,6 @@
-#include "helpers.cc"
+#include "leveldb/write_batch.h"
+
+#include "helpers.h"
 
 namespace node_leveldb {
 
