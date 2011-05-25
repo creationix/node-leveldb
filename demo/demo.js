@@ -1,51 +1,54 @@
 var leveldb = require('../build/default/leveldb.node'),
-    LevelDB = leveldb.LevelDB,
+    DB = leveldb.DB,
     Iterator = leveldb.Iterator,
     WriteBatch = leveldb.WriteBatch;
 
-//console.dir(LevelDB);
-//console.dir(LevelDB.prototype);
-
 var path = __dirname + "/testdb";
 
-var db = new LevelDB();
+var db = new DB();
 
+// Opening
 console.log("Opening...");
 var status = db.open({create_if_missing: true, paranoid_checks: true}, path);
 console.log(status);
 
-var key = new Buffer("Hello");
-
+// Putting
 console.log("\nPutting...");
-for (var i = 0; i < 100; i++) {
-  db.put({}, new Buffer("item" + i), new Buffer("value" + i));
-  if (i%2) {
-    db.del({}, new Buffer("item" + i));
-  }
-}
-var status = db.put({}, key, new Buffer("World"));
+var key = new Buffer("Hello");
+var value = new Buffer("World");
+var status = db.put({}, key, value);
 console.log(status);
 
+// Getting
 console.log("\nGetting...");
-var value = db.get({}, key);
-console.dir(value.__proto__);
-console.dir(Buffer.prototype);
-console.dir(value);
-console.log("OK");
+if(value.toString() == db.get({}, key).toString()) {
+  console.log("OK");
+} else {
+  console.log("FAIL");
+}
 
-//console.log("\nDeleting...");
-//var status = db.del({}, key);
-//console.log(status);
+// Bulk writing
+console.log("\nBulk writing...");
+var wb = new WriteBatch();
+wb.put(new Buffer('foo'), new Buffer('bar'));
+wb.put(new Buffer('booz'), new Buffer('baz'));
+var status = db.write({}, wb);
+console.log("Bulk writing: putting: " + status);
 
+if (db.get({}, new Buffer('booz')).toString() == 'baz' &&
+    db.get({}, new Buffer('foo')).toString() == 'bar') {
+  var status = "OK";
+} else {
+  var status = "FAIL";
+}
+console.log("Bulk writing: getting: " + status);
+
+// Deleting
+console.log("\nDeleting...");
+var status = db.del({}, key);
+console.log(status);
+
+// Closing
 console.log("\nClosing...");
 db.close();
 console.log("OK");
-
-//console.log("\nRepairing...");
-//var status = LevelDB.repairDB(path, {});
-//console.log(status);
-
-//console.log("\nDestroying...");
-//var status = LevelDB.destroyDB(path, {});
-//console.log(status);
-
