@@ -10,14 +10,14 @@
 
 namespace node_leveldb {
 
-  class LevelDB : ObjectWrap {
+  class DB : ObjectWrap {
   private:
     leveldb::DB* db;
     static Persistent<FunctionTemplate> persistent_function_template;
 
   public:
-    LevelDB();
-    ~LevelDB();
+    DB();
+    ~DB();
 
     static void Init(Handle<Object> target);
     static Handle<Value> New(const Arguments& args);
@@ -58,7 +58,7 @@ namespace node_leveldb {
     static Handle<Value> Del(const Arguments& args);
     static Handle<Value> Clear(const Arguments& args);
 
-    friend class LevelDB;
+    friend class DB;
   };
 
 }

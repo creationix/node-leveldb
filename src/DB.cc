@@ -2,61 +2,61 @@
 
 namespace node_leveldb {
 
-  LevelDB::LevelDB() {
+  DB::DB() {
     this->db = NULL;
   }
 
-  LevelDB::~LevelDB() {
+  DB::~DB() {
     if (this->db) {
       delete this->db;
     }
   }
 
-  void LevelDB::Init(Handle<Object> target) {
+  void DB::Init(Handle<Object> target) {
     HandleScope scope; // used by v8 for garbage collection
 
     // Our constructor
     Local<FunctionTemplate> local_function_template = FunctionTemplate::New(New);
-    LevelDB::persistent_function_template = Persistent<FunctionTemplate>::New(local_function_template);
-    LevelDB::persistent_function_template->InstanceTemplate()->SetInternalFieldCount(1); // 1 since this is a constructor function
-    LevelDB::persistent_function_template->SetClassName(String::NewSymbol("LevelDB"));
+    DB::persistent_function_template = Persistent<FunctionTemplate>::New(local_function_template);
+    DB::persistent_function_template->InstanceTemplate()->SetInternalFieldCount(1); // 1 since this is a constructor function
+    DB::persistent_function_template->SetClassName(String::NewSymbol("DB"));
 
     // Instance methods
-    NODE_SET_PROTOTYPE_METHOD(LevelDB::persistent_function_template, "open", Open);
-    NODE_SET_PROTOTYPE_METHOD(LevelDB::persistent_function_template, "close", Close);
-    NODE_SET_PROTOTYPE_METHOD(LevelDB::persistent_function_template, "put", Put);
-    NODE_SET_PROTOTYPE_METHOD(LevelDB::persistent_function_template, "del", Del);
-    NODE_SET_PROTOTYPE_METHOD(LevelDB::persistent_function_template, "write", Write);
-    NODE_SET_PROTOTYPE_METHOD(LevelDB::persistent_function_template, "get", Get);
-    NODE_SET_PROTOTYPE_METHOD(LevelDB::persistent_function_template, "newIterator", NewIterator);
-    NODE_SET_PROTOTYPE_METHOD(LevelDB::persistent_function_template, "getSnapshot", GetSnapshot);
-    NODE_SET_PROTOTYPE_METHOD(LevelDB::persistent_function_template, "releaseSnapshot", ReleaseSnapshot);
-    NODE_SET_PROTOTYPE_METHOD(LevelDB::persistent_function_template, "getProperty", GetProperty);
-    NODE_SET_PROTOTYPE_METHOD(LevelDB::persistent_function_template, "getApproximateSizes", GetApproximateSizes);
+    NODE_SET_PROTOTYPE_METHOD(DB::persistent_function_template, "open", Open);
+    NODE_SET_PROTOTYPE_METHOD(DB::persistent_function_template, "close", Close);
+    NODE_SET_PROTOTYPE_METHOD(DB::persistent_function_template, "put", Put);
+    NODE_SET_PROTOTYPE_METHOD(DB::persistent_function_template, "del", Del);
+    NODE_SET_PROTOTYPE_METHOD(DB::persistent_function_template, "write", Write);
+    NODE_SET_PROTOTYPE_METHOD(DB::persistent_function_template, "get", Get);
+    NODE_SET_PROTOTYPE_METHOD(DB::persistent_function_template, "newIterator", NewIterator);
+    NODE_SET_PROTOTYPE_METHOD(DB::persistent_function_template, "getSnapshot", GetSnapshot);
+    NODE_SET_PROTOTYPE_METHOD(DB::persistent_function_template, "releaseSnapshot", ReleaseSnapshot);
+    NODE_SET_PROTOTYPE_METHOD(DB::persistent_function_template, "getProperty", GetProperty);
+    NODE_SET_PROTOTYPE_METHOD(DB::persistent_function_template, "getApproximateSizes", GetApproximateSizes);
 
     // Static methods
-    NODE_SET_METHOD(LevelDB::persistent_function_template, "destroyDB", DestroyDB);
-    NODE_SET_METHOD(LevelDB::persistent_function_template, "repairDB", RepairDB);
+    NODE_SET_METHOD(DB::persistent_function_template, "destroyDB", DestroyDB);
+    NODE_SET_METHOD(DB::persistent_function_template, "repairDB", RepairDB);
 
     // Binding our constructor function to the target variable
-    target->Set(String::NewSymbol("LevelDB"), LevelDB::persistent_function_template->GetFunction());
+    target->Set(String::NewSymbol("DB"), DB::persistent_function_template->GetFunction());
   }
 
-  // This is our constructor function. It instantiate a C++ LevelDB object and returns a Javascript handle to this object.
-  Handle<Value> LevelDB::New(const Arguments& args) {
+  // This is our constructor function. It instantiate a C++ DB object and returns a Javascript handle to this object.
+  Handle<Value> DB::New(const Arguments& args) {
     HandleScope scope;
 
-    LevelDB* LevelDB_instance = new LevelDB();
+    DB* DB_instance = new DB();
 
     // Wrap our C++ object as a Javascript object
-    LevelDB_instance->Wrap(args.This());
+    DB_instance->Wrap(args.This());
 
     // Our constructor function returns a Javascript object which is a wrapper for our C++ object,
     // This is the expected behavior when calling a constructor function with the new operator in Javascript.
     return args.This();
   }
 
-  Handle<Value> LevelDB::Open(const Arguments& args) {
+  Handle<Value> DB::Open(const Arguments& args) {
     HandleScope scope;
 
     // Check args
@@ -65,7 +65,7 @@ namespace node_leveldb {
     }
 
     // Get this and arguments
-    LevelDB* self = ObjectWrap::Unwrap<LevelDB>(args.This());
+    DB* self = ObjectWrap::Unwrap<DB>(args.This());
 
     if (self->db) {
       delete self->db;
@@ -79,7 +79,7 @@ namespace node_leveldb {
     return processStatus(leveldb::DB::Open(options, *name, &(self->db)));
   }
 
-  Handle<Value> LevelDB::Close(const Arguments& args) {
+  Handle<Value> DB::Close(const Arguments& args) {
     HandleScope scope;
 
     // Check args
@@ -87,7 +87,7 @@ namespace node_leveldb {
       return ThrowException(Exception::TypeError(String::New("Invalid arguments: Expected ()")));
     }
 
-    LevelDB* self = ObjectWrap::Unwrap<LevelDB>(args.This());
+    DB* self = ObjectWrap::Unwrap<DB>(args.This());
 
     delete self->db;
     self->db = NULL;
@@ -95,7 +95,7 @@ namespace node_leveldb {
     return Undefined();
   }
 
-  Handle<Value> LevelDB::DestroyDB(const Arguments& args) {
+  Handle<Value> DB::DestroyDB(const Arguments& args) {
     HandleScope scope;
 
     // Check args
@@ -109,7 +109,7 @@ namespace node_leveldb {
     return processStatus(leveldb::DestroyDB(*name, options));
   }
 
-  Handle<Value> LevelDB::RepairDB(const Arguments& args) {
+  Handle<Value> DB::RepairDB(const Arguments& args) {
     HandleScope scope;
 
     // Check args
@@ -123,7 +123,7 @@ namespace node_leveldb {
     return processStatus(leveldb::RepairDB(*name, options));
   }
 
-  Handle<Value> LevelDB::Put(const Arguments& args) {
+  Handle<Value> DB::Put(const Arguments& args) {
     HandleScope scope;
 
     // Check args
@@ -131,7 +131,7 @@ namespace node_leveldb {
       return ThrowException(Exception::TypeError(String::New("Invalid arguments: Expected (Object, Buffer, Buffer)")));
     }
 
-    LevelDB* self = ObjectWrap::Unwrap<LevelDB>(args.This());
+    DB* self = ObjectWrap::Unwrap<DB>(args.This());
     leveldb::WriteOptions options = JsToWriteOptions(args[0]);
     leveldb::Slice key = JsToSlice(args[1]);
     leveldb::Slice value = JsToSlice(args[2]);
@@ -140,7 +140,7 @@ namespace node_leveldb {
   }
 
 
-  Handle<Value> LevelDB::Del(const Arguments& args) {
+  Handle<Value> DB::Del(const Arguments& args) {
     HandleScope scope;
 
     // Check args
@@ -148,14 +148,14 @@ namespace node_leveldb {
       return ThrowException(Exception::TypeError(String::New("Invalid arguments: Expected (Object, Buffer)")));
     }
 
-    LevelDB* self = ObjectWrap::Unwrap<LevelDB>(args.This());
+    DB* self = ObjectWrap::Unwrap<DB>(args.This());
     leveldb::WriteOptions options = JsToWriteOptions(args[0]);
     leveldb::Slice key = JsToSlice(args[1]);
 
     return processStatus(self->db->Delete(options, key));
   }
 
-  Handle<Value> LevelDB::Get(const Arguments& args) {
+  Handle<Value> DB::Get(const Arguments& args) {
     HandleScope scope;
 
     // Check args
@@ -163,7 +163,7 @@ namespace node_leveldb {
       return ThrowException(Exception::TypeError(String::New("Invalid arguments: Expected (Object, Buffer)")));
     }
 
-    LevelDB* self = ObjectWrap::Unwrap<LevelDB>(args.This());
+    DB* self = ObjectWrap::Unwrap<DB>(args.This());
     leveldb::ReadOptions options = JsToReadOptions(args[0]);
     leveldb::Slice key = JsToSlice(args[1]);
 
@@ -183,14 +183,14 @@ namespace node_leveldb {
     return scope.Close(actualBuffer);
   }
 
-  Handle<Value> LevelDB::Write(const Arguments& args) {
+  Handle<Value> DB::Write(const Arguments& args) {
     HandleScope scope;
 
     if (!(args.Length() == 2 && args[0]->IsObject() && args[1]->IsObject())) {
       return ThrowException(Exception::TypeError(String::New("Invalid arguments: Expected (Object, WriteBatch)")));
     }
 
-    LevelDB* self = ObjectWrap::Unwrap<LevelDB>(args.This());
+    DB* self = ObjectWrap::Unwrap<DB>(args.This());
     leveldb::WriteOptions options = JsToWriteOptions(args[0]);
     Local<Object> wbObject = Object::Cast(*args[1]);
 
@@ -200,29 +200,29 @@ namespace node_leveldb {
   }
 
 
-  Handle<Value> LevelDB::NewIterator(const Arguments& args) {
+  Handle<Value> DB::NewIterator(const Arguments& args) {
     HandleScope scope;
     return ThrowException(Exception::Error(String::New("TODO: IMPLEMENT ME")));
   }
 
 
-  Handle<Value> LevelDB::GetSnapshot(const Arguments& args) {
+  Handle<Value> DB::GetSnapshot(const Arguments& args) {
     HandleScope scope;
     return ThrowException(Exception::Error(String::New("TODO: IMPLEMENT ME")));
   }
 
-  Handle<Value> LevelDB::ReleaseSnapshot(const Arguments& args) {
+  Handle<Value> DB::ReleaseSnapshot(const Arguments& args) {
     HandleScope scope;
     return ThrowException(Exception::Error(String::New("TODO: IMPLEMENT ME")));
   }
 
 
-  Handle<Value> LevelDB::GetProperty(const Arguments& args) {
+  Handle<Value> DB::GetProperty(const Arguments& args) {
     HandleScope scope;
     return ThrowException(Exception::Error(String::New("TODO: IMPLEMENT ME")));
   }
 
-  Handle<Value> LevelDB::GetApproximateSizes(const Arguments& args) {
+  Handle<Value> DB::GetApproximateSizes(const Arguments& args) {
     HandleScope scope;
     return ThrowException(Exception::Error(String::New("TODO: IMPLEMENT ME")));
   }
