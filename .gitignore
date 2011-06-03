@@ -4,3 +4,4 @@
 deps/leveldb/*_test
 deps/leveldb/db_bench
 build
+demo/testdb

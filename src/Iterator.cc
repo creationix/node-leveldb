@@ -1,47 +1,32 @@
+#include "Iterator.h"
 #include "helpers.h"
 
-namespace node_leveldb {
+using namespace node_leveldb;
 
-class Iterator : node::ObjectWrap {
-  private:
-  public:
-    Iterator() {}
-    ~Iterator() {}
+Persistent<FunctionTemplate> Iterator::persistent_function_template;
 
-    // Holds our constructor function
-    static v8::Persistent<FunctionTemplate> persistent_function_template;
+Iterator::Iterator() {
+}
 
-    static void Init(Handle<Object> target) {
-      v8::HandleScope scope; // used by v8 for garbage collection
+Iterator::~Iterator() {
+}
 
-      // Our constructor
-      v8::Local<FunctionTemplate> local_function_template = v8::FunctionTemplate::New(New);
-      Iterator::persistent_function_template = v8::Persistent<FunctionTemplate>::New(local_function_template);
-      Iterator::persistent_function_template->InstanceTemplate()->SetInternalFieldCount(1); // 1 since this is a constructor function
-      Iterator::persistent_function_template->SetClassName(v8::String::NewSymbol("Iterator"));
+void Iterator::Init(Handle<Object> target) {
+  HandleScope scope;
 
-      // Our getters and setters
+  Local<FunctionTemplate> local_function_template = FunctionTemplate::New(New);
+  persistent_function_template = Persistent<FunctionTemplate>::New(local_function_template);
+  persistent_function_template->InstanceTemplate()->SetInternalFieldCount(1);
+  persistent_function_template->SetClassName(String::NewSymbol("Iterator"));
 
-      // Our methods
+  target->Set(String::NewSymbol("Iterator"), persistent_function_template->GetFunction());
+}
 
-      // Binding our constructor function to the target variable
-      target->Set(String::NewSymbol("Iterator"), Iterator::persistent_function_template->GetFunction());
-    }
-
-    // This is our constructor function. It instantiate a C++ Iterator object and returns a Javascript handle to this object.
-    static Handle<Value> New(const Arguments& args) {
-      HandleScope scope;
-      Iterator* Iterator_instance = new Iterator();
-      // Set some default values
-      
-      // Wrap our C++ object as a Javascript object
-      Iterator_instance->Wrap(args.This());
-      
-      // Our constructor function returns a Javascript object which is a wrapper for our C++ object, 
-      // This is the expected behavior when calling a constructor function with the new operator in Javascript.
-      return args.This();
-    }
-
-};
-
+Handle<Value> Iterator::New(const Arguments& args) {
+  HandleScope scope;
+  
+  Iterator* iterator = new Iterator();
+  iterator->Wrap(args.This());
+  
+  return args.This();
 }
