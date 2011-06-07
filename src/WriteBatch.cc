@@ -1,5 +1,6 @@
 #include "WriteBatch.h"
 
+#include <node_buffer.h>
 #include "helpers.h"
 
 using namespace node_leveldb;

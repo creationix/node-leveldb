@@ -12,15 +12,13 @@ using namespace node;
 namespace node_leveldb {
 
 class DB : ObjectWrap {
-private:
-  leveldb::DB* db;
-  static Persistent<FunctionTemplate> persistent_function_template;
-
 public:
   DB();
   ~DB();
 
   static void Init(Handle<Object> target);
+
+private:
   static Handle<Value> New(const Arguments& args);
 
   static Handle<Value> Open(const Arguments& args);
@@ -41,6 +39,40 @@ public:
 
   static Handle<Value> GetProperty(const Arguments& args);
   static Handle<Value> GetApproximateSizes(const Arguments& args);
+
+
+  struct Params {
+    DB* self;
+    Persistent<Function> callback;
+    leveldb::Status status;
+
+    Params(DB* self, Handle<Function> cb) : self(self) {
+      self->Ref();
+      ev_ref(EV_DEFAULT_UC);
+      callback = Persistent<Function>::New(cb);
+    }
+    
+    virtual ~Params() {
+      self->Unref();
+      ev_unref(EV_DEFAULT_UC);
+      callback.Dispose();
+    }
+  };
+
+  struct OpenParams : Params {
+    OpenParams(DB *self, std::string name, leveldb::Options options, Handle<Function> callback)
+      : Params(self, callback), name(name), options(options) {}
+
+    std::string name;
+    leveldb::Options options;
+  };
+
+  static void EIO_BeforeOpen(OpenParams *params);
+  static int EIO_Open(eio_req *req);
+  static int EIO_AfterOpen(eio_req *req);
+  
+  leveldb::DB* db;
+  static Persistent<FunctionTemplate> persistent_function_template;
 };
 
 } // node_leveldb

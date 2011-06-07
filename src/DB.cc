@@ -4,6 +4,8 @@
 #include <node_buffer.h>
 #include "helpers.h"
 
+#include <iostream>
+
 using namespace node_leveldb;
 
 Persistent<FunctionTemplate> DB::persistent_function_template;
@@ -52,8 +54,8 @@ void DB::Init(Handle<Object> target) {
 Handle<Value> DB::New(const Arguments& args) {
   HandleScope scope;
 
-  DB* db = new DB();
-  db->Wrap(args.This());
+  DB* self = new DB();
+  self->Wrap(args.This());
 
   return args.This();
 }
@@ -61,33 +63,82 @@ Handle<Value> DB::New(const Arguments& args) {
 Handle<Value> DB::Open(const Arguments& args) {
   HandleScope scope;
 
-  // Check args
-  if (!(args.Length() == 2 && args[0]->IsObject() && args[1]->IsString())) {
-    return ThrowException(Exception::TypeError(String::New("Invalid arguments: Expected (Object, String)")));
-  }
-
   // Get this and arguments
   DB* self = ObjectWrap::Unwrap<DB>(args.This());
 
+  // Required filename
+  if (args.Length() < 1 || !args[0]->IsString()) {
+    return ThrowException(Exception::TypeError(String::New("DB.open() expects a filename")));
+  }
+  String::Utf8Value name(args[0]);
+  
+  int pos = 1;
+
+  // Optional options
+  leveldb::Options options = leveldb::Options();
+  if (pos < args.Length() && args[pos]->IsObject() && !args[pos]->IsFunction()) {
+    options = JsToOptions(args[pos]);
+    pos++;
+  }
+
+  // Optional callback
+  Local<Function> callback;
+  if (pos < args.Length() && args[pos]->IsFunction()) {
+    callback = Local<Function>::Cast(args[pos]);
+    pos++;
+  }
+
+  // Pass parameters to async function
+  OpenParams *params = new OpenParams(self, *name, options, callback);
+  EIO_BeforeOpen(params);
+
+  return args.This();
+}
+
+void DB::EIO_BeforeOpen(OpenParams *params) {
+  eio_custom(EIO_Open, EIO_PRI_DEFAULT, EIO_AfterOpen, params);
+}
+
+int DB::EIO_Open(eio_req *req) {
+  OpenParams *params = static_cast<OpenParams*>(req->data);
+  DB *self = params->self;
+
+  // Close old DB, if open() is called more than once
   if (self->db) {
     delete self->db;
     self->db = NULL;
   }
 
-  leveldb::Options options = JsToOptions(args[0]);
-  String::Utf8Value name(args[1]);
+  // Do the actual work
+  params->status = leveldb::DB::Open(params->options, params->name, &self->db);
 
-  // Do actual work
-  return processStatus(leveldb::DB::Open(options, *name, &(self->db)));
+  return 0;
+}
+
+int DB::EIO_AfterOpen(eio_req *req) {
+  OpenParams *params = static_cast<OpenParams*>(req->data);
+  
+  if (!params->callback.IsEmpty()) {
+    TryCatch try_catch;
+    Local<String> result = String::New(params->status.ToString().c_str());
+    if (params->status.ok()) {
+      Local<Value> argv[] = { Local<Value>::New(Undefined()), result };
+      params->callback->Call(params->self->handle_, 2, argv);
+    } else {
+      Local<Value> argv[] = { Exception::Error(result) };
+      params->callback->Call(params->self->handle_, 1, argv);
+    }
+    if (try_catch.HasCaught()) {
+        FatalException(try_catch);
+    }
+  }
+
+  delete params;
+  return 0;
 }
 
 Handle<Value> DB::Close(const Arguments& args) {
   HandleScope scope;
-
-  // Check args
-  if (!(args.Length() == 0)) {
-    return ThrowException(Exception::TypeError(String::New("Invalid arguments: Expected ()")));
-  }
 
   DB* self = ObjectWrap::Unwrap<DB>(args.This());
 
@@ -134,6 +185,10 @@ Handle<Value> DB::Put(const Arguments& args) {
   }
 
   DB* self = ObjectWrap::Unwrap<DB>(args.This());
+  if (self->db == NULL) {
+    return ThrowException(Exception::Error(String::New("DB has not been opened")));
+  }
+  
   leveldb::WriteOptions options = JsToWriteOptions(args[0]);
   leveldb::Slice key = JsToSlice(args[1]);
   leveldb::Slice value = JsToSlice(args[2]);
@@ -150,6 +205,10 @@ Handle<Value> DB::Del(const Arguments& args) {
   }
 
   DB* self = ObjectWrap::Unwrap<DB>(args.This());
+  if (self->db == NULL) {
+    return ThrowException(Exception::Error(String::New("DB has not been opened")));
+  }
+  
   leveldb::WriteOptions options = JsToWriteOptions(args[0]);
   leveldb::Slice key = JsToSlice(args[1]);
 
@@ -165,6 +224,10 @@ Handle<Value> DB::Get(const Arguments& args) {
   }
 
   DB* self = ObjectWrap::Unwrap<DB>(args.This());
+  if (self->db == NULL) {
+    return ThrowException(Exception::Error(String::New("DB has not been opened")));
+  }
+  
   leveldb::ReadOptions options = JsToReadOptions(args[0]);
   leveldb::Slice key = JsToSlice(args[1]);
 
@@ -192,6 +255,10 @@ Handle<Value> DB::Write(const Arguments& args) {
   }
 
   DB* self = ObjectWrap::Unwrap<DB>(args.This());
+  if (self->db == NULL) {
+    return ThrowException(Exception::Error(String::New("DB has not been opened")));
+  }
+  
   leveldb::WriteOptions options = JsToWriteOptions(args[0]);
   Local<Object> wbObject = Object::Cast(*args[1]);
 
