@@ -13,6 +13,7 @@ WriteBatch::WriteBatch() {
 
 WriteBatch::~WriteBatch() {
   delete this->wb;
+  this->wb = NULL;
 }
 
 void WriteBatch::Init(Handle<Object> target) {

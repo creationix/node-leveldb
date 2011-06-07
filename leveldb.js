@@ -82,7 +82,7 @@ db.put(key, value, options, function (err) { /*...*/ });
 db.del(key, options, function (err) { /*...*/ });
 
 // Write a batch of updates in one call
-db.write(updates, options, function (err) { /*...*/ });
+db.write(writeBatch, options, function (err) { /*...*/ });
 
 // Getting a value from the database
 db.get(key, options, function (err, value) { /*...*/ });
