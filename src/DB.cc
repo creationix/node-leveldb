@@ -59,6 +59,11 @@ Handle<Value> DB::New(const Arguments& args) {
   return args.This();
 }
 
+
+//
+// Open
+//
+
 Handle<Value> DB::Open(const Arguments& args) {
   HandleScope scope;
 
@@ -122,16 +127,56 @@ int DB::EIO_AfterOpen(eio_req *req) {
   return 0;
 }
 
+
+//
+// Close
+//
+
 Handle<Value> DB::Close(const Arguments& args) {
   HandleScope scope;
 
   DB* self = ObjectWrap::Unwrap<DB>(args.This());
+  
+  // Optional callback
+  Local<Function> callback;
+  if (0 < args.Length() && args[0]->IsFunction()) {
+    callback = Local<Function>::Cast(args[0]);
+  }
 
-  delete self->db;
-  self->db = NULL;
-
-  return Undefined();
+  Params *params = new Params(self, callback);
+  EIO_BeforeClose(params);
+  
+  return args.This();
 }
+
+void DB::EIO_BeforeClose(Params *params) {
+  eio_custom(EIO_Close, EIO_PRI_DEFAULT, EIO_AfterClose, params);
+}
+
+int DB::EIO_Close(eio_req *req) {
+  Params *params = static_cast<Params*>(req->data);
+  DB *self = params->self;
+
+  if (self->db) {
+    delete self->db;
+    self->db = NULL;
+  }
+  
+  return 0;
+}
+
+int DB::EIO_AfterClose(eio_req *req) {
+  Params *params = static_cast<Params*>(req->data);
+  params->Callback();
+  
+  delete params;
+  return 0;
+}
+
+
+//
+// DestroyDB
+//
 
 Handle<Value> DB::DestroyDB(const Arguments& args) {
   HandleScope scope;

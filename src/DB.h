@@ -63,6 +63,10 @@ private:
   static int EIO_Open(eio_req *req);
   static int EIO_AfterOpen(eio_req *req);
   
+  static void EIO_BeforeClose(Params *params);
+  static int EIO_Close(eio_req *req);
+  static int EIO_AfterClose(eio_req *req);
+  
   leveldb::DB* db;
   static Persistent<FunctionTemplate> persistent_function_template;
 };
