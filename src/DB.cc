@@ -4,14 +4,13 @@
 #include <node_buffer.h>
 #include "helpers.h"
 
-#include <iostream>
-
 using namespace node_leveldb;
 
 Persistent<FunctionTemplate> DB::persistent_function_template;
 
-DB::DB() {
-  this->db = NULL;
+DB::DB() 
+  : db(NULL)
+{
 }
 
 DB::~DB() {
@@ -117,22 +116,8 @@ int DB::EIO_Open(eio_req *req) {
 
 int DB::EIO_AfterOpen(eio_req *req) {
   OpenParams *params = static_cast<OpenParams*>(req->data);
+  params->Callback();
   
-  if (!params->callback.IsEmpty()) {
-    TryCatch try_catch;
-    Local<String> result = String::New(params->status.ToString().c_str());
-    if (params->status.ok()) {
-      Local<Value> argv[] = { Local<Value>::New(Undefined()), result };
-      params->callback->Call(params->self->handle_, 2, argv);
-    } else {
-      Local<Value> argv[] = { Exception::Error(result) };
-      params->callback->Call(params->self->handle_, 1, argv);
-    }
-    if (try_catch.HasCaught()) {
-        FatalException(try_catch);
-    }
-  }
-
   delete params;
   return 0;
 }
@@ -291,4 +276,42 @@ Handle<Value> DB::GetApproximateSizes(const Arguments& args) {
   HandleScope scope;
   return ThrowException(Exception::Error(String::New("TODO: IMPLEMENT ME")));
 }
+
+
+//
+// Implementation of Params, which are passed from JS thread to EIO thread and back again
+//
+
+DB::Params::Params(DB* self, Handle<Function> cb)
+  : self(self)
+{
+  self->Ref();
+  ev_ref(EV_DEFAULT_UC);
+  callback = Persistent<Function>::New(cb);
+}
+
+DB::Params::~Params() {
+  self->Unref();
+  ev_unref(EV_DEFAULT_UC);
+  callback.Dispose();
+}
+
+void DB::Params::Callback() {
+  if (!callback.IsEmpty()) {
+    TryCatch try_catch;
+    if (status.ok()) {
+      // no error, callback with no arguments
+      callback->Call(self->handle_, 0, NULL);
+    } else {
+      // error, callback with first argument as error object
+      Local<String> result = String::New(status.ToString().c_str());
+      Local<Value> argv[] = { Exception::Error(result) };
+      callback->Call(self->handle_, 1, argv);
+    }
+    if (try_catch.HasCaught()) {
+        FatalException(try_catch);
+    }
+  }
+}
+
 

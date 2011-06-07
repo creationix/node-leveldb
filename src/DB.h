@@ -14,7 +14,7 @@ namespace node_leveldb {
 class DB : ObjectWrap {
 public:
   DB();
-  ~DB();
+  virtual ~DB();
 
   static void Init(Handle<Object> target);
 
@@ -42,21 +42,13 @@ private:
 
 
   struct Params {
+    Params(DB* self, Handle<Function> cb);
+    virtual ~Params();
+    virtual void Callback();
+
     DB* self;
     Persistent<Function> callback;
     leveldb::Status status;
-
-    Params(DB* self, Handle<Function> cb) : self(self) {
-      self->Ref();
-      ev_ref(EV_DEFAULT_UC);
-      callback = Persistent<Function>::New(cb);
-    }
-    
-    virtual ~Params() {
-      self->Unref();
-      ev_unref(EV_DEFAULT_UC);
-      callback.Dispose();
-    }
   };
 
   struct OpenParams : Params {
