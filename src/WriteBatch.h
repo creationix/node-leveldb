@@ -23,7 +23,7 @@ public:
   static Handle<Value> Put(const Arguments& args);
   static Handle<Value> Del(const Arguments& args);
   static Handle<Value> Clear(const Arguments& args);
-
+  
 private:
   leveldb::WriteBatch wb;
   std::vector<std::string> strings;

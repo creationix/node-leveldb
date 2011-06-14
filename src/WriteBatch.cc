@@ -47,8 +47,8 @@ Handle<Value> WriteBatch::Put(const Arguments& args) {
 
   WriteBatch* self = ObjectWrap::Unwrap<WriteBatch>(args.This());
   
-  leveldb::Slice key = JsToSlice(args[0], self->strings);
-  leveldb::Slice value = JsToSlice(args[1], self->strings);
+  leveldb::Slice key = JsToSlice(args[0], &self->strings);
+  leveldb::Slice value = JsToSlice(args[1], &self->strings);
   
   self->wb.Put(key, value);
 
@@ -64,7 +64,7 @@ Handle<Value> WriteBatch::Del(const Arguments& args) {
   }
 
   WriteBatch* self = ObjectWrap::Unwrap<WriteBatch>(args.This());
-  leveldb::Slice key = JsToSlice(args[0], self->strings);
+  leveldb::Slice key = JsToSlice(args[0], &self->strings);
 
   self->wb.Delete(key);
 
@@ -75,7 +75,6 @@ Handle<Value> WriteBatch::Clear(const Arguments& args) {
   HandleScope scope;
 
   WriteBatch* self = ObjectWrap::Unwrap<WriteBatch>(args.This());
-
   self->wb.Clear();
   self->strings.clear();
 

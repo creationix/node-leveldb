@@ -197,8 +197,8 @@ Handle<Value> DB::Put(const Arguments& args) {
 
   // Use temporary WriteBatch to implement Put
   WriteBatch *writeBatch = new WriteBatch();
-  leveldb::Slice key = JsToSlice(args[0], writeBatch->strings);
-  leveldb::Slice value = JsToSlice(args[1], writeBatch->strings);
+  leveldb::Slice key = JsToSlice(args[0], &writeBatch->strings);
+  leveldb::Slice value = JsToSlice(args[1], &writeBatch->strings);
   writeBatch->wb.Put(key, value);
 
   int pos = 2;
@@ -245,7 +245,7 @@ Handle<Value> DB::Del(const Arguments& args) {
 
   // Use temporary WriteBatch to implement Del
   WriteBatch *writeBatch = new WriteBatch();
-  leveldb::Slice key = JsToSlice(args[0], writeBatch->strings);
+  leveldb::Slice key = JsToSlice(args[0], &writeBatch->strings);
   writeBatch->wb.Delete(key);
   
   int pos = 1;
@@ -354,8 +354,8 @@ Handle<Value> DB::Get(const Arguments& args) {
   HandleScope scope;
 
   // Check args
-  if (args.Length() < 2 || !args[0]->IsObject() || !Buffer::HasInstance(args[1])) {
-    return ThrowException(Exception::TypeError(String::New("DB.get() expects (Object, Buffer)")));
+  if (args.Length() < 1 || (!args[0]->IsString() && !Buffer::HasInstance(args[0]))) {
+    return ThrowException(Exception::TypeError(String::New("DB.get() expects key")));
   }
 
   DB* self = ObjectWrap::Unwrap<DB>(args.This());
@@ -363,23 +363,59 @@ Handle<Value> DB::Get(const Arguments& args) {
     return ThrowException(Exception::Error(String::New("DB has not been opened")));
   }
   
-  leveldb::ReadOptions options = JsToReadOptions(args[0]);
-  leveldb::Slice key = JsToSlice(args[1]);
+  std::vector<std::string> *strings = NULL;
+  if (args[0]->IsString()) {
+    strings = new std::vector<std::string>(1);
+  }
+  leveldb::Slice key = JsToSlice(args[0], strings);
   
-  // Read value from database
-  std::string value;
-  leveldb::Status status = self->db->Get(options, key, &value);
-  if (!status.ok()) return ThrowException(Exception::Error(String::New(status.ToString().c_str())));
-  
-  // Convert string to real JS Buffer
-  int length = value.length();
-  Buffer *slowBuffer = Buffer::New(length);
-  memcpy(BufferData(slowBuffer), value.c_str(), length);
-  Local<Function> bufferConstructor = Local<Function>::Cast(Context::GetCurrent()->Global()->Get(String::New("Buffer")));
-  Handle<Value> constructorArgs[3] = { slowBuffer->handle_, Integer::New(length), Integer::New(0) };
-  Local<Object> actualBuffer = bufferConstructor->NewInstance(3, constructorArgs);
+  int pos = 1;
 
-  return scope.Close(actualBuffer);
+  // Optional read options
+  leveldb::ReadOptions options = leveldb::ReadOptions();
+  if (pos < args.Length() && args[pos]->IsObject() && !args[pos]->IsFunction()) {
+    options = JsToReadOptions(args[pos]);
+    pos++;
+  }
+
+  // Optional callback
+  Local<Function> callback;
+  if (pos < args.Length() && args[pos]->IsFunction()) {
+    callback = Local<Function>::Cast(args[pos]);
+    pos++;
+  }
+  
+  // Pass parameters to async function
+  ReadParams *params = new ReadParams(self, key, options, callback, strings);
+  EIO_BeforeRead(params);
+
+  return args.This();
+}
+
+void DB::EIO_BeforeRead(ReadParams *params) {
+  eio_custom(EIO_Read, EIO_PRI_DEFAULT, EIO_AfterRead, params);
+}
+
+int DB::EIO_Read(eio_req *req) {
+  ReadParams *params = static_cast<ReadParams*>(req->data);
+  DB *self = params->self;
+
+  // Do the actual work
+  if (self->db != NULL) {
+    params->status = self->db->Get(params->options, params->key, &params->result);
+  }
+
+  return 0;
+}
+
+int DB::EIO_AfterRead(eio_req *req) {
+  HandleScope scope;
+  
+  ReadParams *params = static_cast<ReadParams*>(req->data);
+  params->Callback(String::New(params->result.data(), params->result.length()));
+
+  delete params;
+  return 0;
 }
 
 
@@ -465,21 +501,33 @@ DB::Params::~Params() {
   callback.Dispose();
 }
 
-void DB::Params::Callback() {
+void DB::Params::Callback(Handle<Value> result) {
   if (!callback.IsEmpty()) {
     TryCatch try_catch;
     if (status.ok()) {
-      // no error, callback with no arguments
-      callback->Call(self->handle_, 0, NULL);
+      // no error, callback with no arguments, or result as second argument
+      if (result.IsEmpty()) {
+        callback->Call(self->handle_, 0, NULL);
+      } else {
+        Handle<Value> undef = Undefined();
+        Handle<Value> argv[] = { undef, result };
+        callback->Call(self->handle_, 2, argv);
+      }
     } else {
       // error, callback with first argument as error object
-      Local<String> result = String::New(status.ToString().c_str());
-      Local<Value> argv[] = { Exception::Error(result) };
+      Handle<String> message = String::New(status.ToString().c_str());
+      Handle<Value> argv[] = { Exception::Error(message) };
       callback->Call(self->handle_, 1, argv);
     }
     if (try_catch.HasCaught()) {
         FatalException(try_catch);
     }
+  }
+}
+
+DB::ReadParams::~ReadParams() {
+  if (strings != NULL) {
+    delete strings;
   }
 }
 

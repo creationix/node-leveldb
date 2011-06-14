@@ -19,8 +19,7 @@ namespace node_leveldb {
   leveldb::Options JsToOptions(Handle<Value> val);
   leveldb::ReadOptions JsToReadOptions(Handle<Value> val);
   leveldb::WriteOptions JsToWriteOptions(Handle<Value> val);
-  leveldb::Slice JsToSlice(Handle<Value> val, std::vector<std::string> &strings);
-  leveldb::Slice JsToSlice(Handle<Value> val);
+  leveldb::Slice JsToSlice(Handle<Value> val, std::vector<std::string> *strings);
 
   // Helper to convert a leveldb::Status instance to a V8 return value
   Handle<Value> processStatus(leveldb::Status status);

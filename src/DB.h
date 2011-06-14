@@ -46,7 +46,7 @@ private:
   struct Params {
     Params(DB* self, Handle<Function> cb);
     virtual ~Params();
-    virtual void Callback();
+    virtual void Callback(Handle<Value> result = Handle<Value>());
 
     DB* self;
     Persistent<Function> callback;
@@ -59,6 +59,18 @@ private:
 
     std::string name;
     leveldb::Options options;
+  };
+
+  struct ReadParams : Params {
+    ReadParams(DB *self, leveldb::Slice key, leveldb::ReadOptions &options, Handle<Function> callback, std::vector<std::string> *strings = NULL)
+      : Params(self, callback), key(key), options(options), strings(strings) {}
+    
+    virtual ~ReadParams();
+
+    leveldb::Slice key;
+    leveldb::ReadOptions options;
+    std::vector<std::string> *strings;
+    std::string result;
   };
 
   struct WriteParams : Params {
@@ -77,6 +89,10 @@ private:
   static void EIO_BeforeClose(Params *params);
   static int EIO_Close(eio_req *req);
   static int EIO_AfterClose(eio_req *req);
+  
+  static void EIO_BeforeRead(ReadParams *params);
+  static int EIO_Read(eio_req *req);
+  static int EIO_AfterRead(eio_req *req);
   
   static void EIO_BeforeWrite(WriteParams *params);
   static int EIO_Write(eio_req *req);

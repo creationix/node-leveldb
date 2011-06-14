@@ -6,7 +6,7 @@ console.log("Creating test database");
 var path = "/tmp/large.db";
 var db = new DB();
 
-var batchSize = 1000;
+var batchSize = 100;
 var totalSize = 1000000;
 
 db.open(path, {create_if_missing: true}, function() {

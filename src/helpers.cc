@@ -53,25 +53,14 @@ leveldb::WriteOptions JsToWriteOptions(Handle<Value> val) {
   return options;
 }
 
-leveldb::Slice JsToSlice(Handle<Value> val, std::vector<std::string> &strings) {
+leveldb::Slice JsToSlice(Handle<Value> val, std::vector<std::string> *strings) {
   HandleScope scope;
-  if (val->IsString()) {
+  if (val->IsString() && strings != NULL) {
     std::string str(*String::Utf8Value(val));
-    strings.push_back(str);
+    strings->push_back(str);
     return leveldb::Slice(str.data(), str.length());
   }
   else if (Buffer::HasInstance(val)) {
-    Local<Object> obj = Object::Cast(*val);
-    return leveldb::Slice(BufferData(obj), BufferLength(obj));
-  }
-  else {
-    return leveldb::Slice();
-  }
-}
-
-leveldb::Slice JsToSlice(Handle<Value> val) {
-  HandleScope scope;
-  if (Buffer::HasInstance(val)) {
     Local<Object> obj = Object::Cast(*val);
     return leveldb::Slice(BufferData(obj), BufferLength(obj));
   }
