@@ -62,10 +62,10 @@ private:
   };
 
   struct WriteParams : Params {
-    WriteParams(DB *self, leveldb::WriteBatch *writeBatch, leveldb::WriteOptions &options, Handle<Function> callback)
+    WriteParams(DB *self, WriteBatch *writeBatch, leveldb::WriteOptions &options, Handle<Function> callback)
       : Params(self, callback), writeBatch(writeBatch), options(options), disposeWriteBatch(false) {}
 
-    leveldb::WriteBatch *writeBatch;
+    WriteBatch *writeBatch;
     leveldb::WriteOptions options;
     bool disposeWriteBatch;   // when set, EIO_AfterWrite will delete the writeBatch
   };

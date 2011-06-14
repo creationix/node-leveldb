@@ -8,12 +8,9 @@ using namespace node_leveldb;
 Persistent<FunctionTemplate> WriteBatch::persistent_function_template;
 
 WriteBatch::WriteBatch() {
-  this->wb = new leveldb::WriteBatch();
 }
 
 WriteBatch::~WriteBatch() {
-  delete this->wb;
-  this->wb = NULL;
 }
 
 void WriteBatch::Init(Handle<Object> target) {
@@ -44,45 +41,43 @@ Handle<Value> WriteBatch::Put(const Arguments& args) {
   HandleScope scope;
 
   // Check args
-  if (!(args.Length() == 2 && Buffer::HasInstance(args[0]) && Buffer::HasInstance(args[1]))) {
-    return ThrowException(Exception::TypeError(String::New("Invalid arguments: Expected (Buffer, Buffer)")));
+  if (args.Length() < 2 || (!args[0]->IsString() && !Buffer::HasInstance(args[0])) || (!args[1]->IsString() && !Buffer::HasInstance(args[1]))) {
+    return ThrowException(Exception::TypeError(String::New("WriteBatch.put() expects key, value")));
   }
 
   WriteBatch* self = ObjectWrap::Unwrap<WriteBatch>(args.This());
-  leveldb::Slice key = JsToSlice(args[0]);
-  leveldb::Slice value = JsToSlice(args[1]);
+  
+  leveldb::Slice key = JsToSlice(args[0], self->strings);
+  leveldb::Slice value = JsToSlice(args[1], self->strings);
+  
+  self->wb.Put(key, value);
 
-  self->wb->Put(key, value);
-
-  return Undefined();
+  return args.This();
 }
 
 Handle<Value> WriteBatch::Del(const Arguments& args) {
   HandleScope scope;
 
   // Check args
-  if (!(args.Length() == 1 && Buffer::HasInstance(args[0]))) {
-    return ThrowException(Exception::TypeError(String::New("Invalid arguments: Expected (Buffer)")));
+  if (args.Length() < 1 || (!args[0]->IsString() && !Buffer::HasInstance(args[0]))) {
+    return ThrowException(Exception::TypeError(String::New("WriteBatch.del() expects key")));
   }
 
   WriteBatch* self = ObjectWrap::Unwrap<WriteBatch>(args.This());
-  leveldb::Slice key = JsToSlice(args[0]);
+  leveldb::Slice key = JsToSlice(args[0], self->strings);
 
-  self->wb->Delete(key);
+  self->wb.Delete(key);
 
-  return Undefined();
+  return args.This();
 }
 
 Handle<Value> WriteBatch::Clear(const Arguments& args) {
   HandleScope scope;
 
-  if (!(args.Length() == 0)) {
-    return ThrowException(Exception::TypeError(String::New("Invalid arguments: Expected none")));
-  }
-
   WriteBatch* self = ObjectWrap::Unwrap<WriteBatch>(args.This());
 
-  self->wb->Clear();
+  self->wb.Clear();
+  self->strings.clear();
 
-  return Undefined();
+  return args.This();
 }

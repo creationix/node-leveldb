@@ -15,10 +15,16 @@ db.open(path, {create_if_missing: true, paranoid_checks: true}, function(err) {
     
     // Putting
     console.log("\nPutting...");
-    var key = new Buffer("Hello");
-    var value = new Buffer("World");
+    var key = "Hello";
+    var value = "World";
     db.put(key, value, function(err) {
         if (err) throw err;
+        console.log("ok");
+        
+        // Getting
+        console.log("\nGetting...");
+        var val = db.get({}, new Buffer(key)).toString();
+        if (val != value) throw "Expected: " + value + ", got: " + val;
         console.log("ok");
         
         // Deleting
@@ -26,7 +32,7 @@ db.open(path, {create_if_missing: true, paranoid_checks: true}, function(err) {
         db.del(key, function(err) {
             if (err) throw err;
             console.log("ok");
-
+            
             // Closing
             console.log("\nClosing...")
             db.close(function(err) {

@@ -3,7 +3,6 @@
 
 #include <node_buffer.h>
 #include "helpers.h"
-#include <iostream>
 
 using namespace node_leveldb;
 
@@ -15,9 +14,9 @@ DB::DB()
 }
 
 DB::~DB() {
-  if (this->db) {
-    delete this->db;
-    this->db = NULL;
+  if (db != NULL) {
+    delete db;
+    db = NULL;
   }
 }
 
@@ -121,6 +120,8 @@ int DB::EIO_Open(eio_req *req) {
 }
 
 int DB::EIO_AfterOpen(eio_req *req) {
+  HandleScope scope;
+
   OpenParams *params = static_cast<OpenParams*>(req->data);
   params->Callback();
   
@@ -190,15 +191,15 @@ Handle<Value> DB::Put(const Arguments& args) {
   }
   
   // Check args
-  if (args.Length() < 2 || !Buffer::HasInstance(args[0]) || !Buffer::HasInstance(args[1])) {
-    return ThrowException(Exception::TypeError(String::New("Invalid arguments: Expected (Buffer, Buffer)")));
+  if (args.Length() < 2 || (!args[0]->IsString() && !Buffer::HasInstance(args[0])) || (!args[1]->IsString() && !Buffer::HasInstance(args[1]))) {
+    return ThrowException(Exception::TypeError(String::New("DB.put() expects key, value")));
   }
 
-  leveldb::Slice key = JsToSlice(args[0]);
-  leveldb::Slice value = JsToSlice(args[1]);
-  
-  leveldb::WriteBatch *writeBatch = new leveldb::WriteBatch();
-  writeBatch->Put(key, value);
+  // Use temporary WriteBatch to implement Put
+  WriteBatch *writeBatch = new WriteBatch();
+  leveldb::Slice key = JsToSlice(args[0], writeBatch->strings);
+  leveldb::Slice value = JsToSlice(args[1], writeBatch->strings);
+  writeBatch->wb.Put(key, value);
 
   int pos = 2;
 
@@ -216,11 +217,8 @@ Handle<Value> DB::Put(const Arguments& args) {
     pos++;
   }
   
-  // Pass parameters to async function
   WriteParams *params = new WriteParams(self, writeBatch, options, callback);
   params->disposeWriteBatch = true;
-  
-  // Use Write to implement Put
   EIO_BeforeWrite(params);
 
   return args.This();
@@ -241,15 +239,15 @@ Handle<Value> DB::Del(const Arguments& args) {
   }
   
   // Check args
-  if (args.Length() < 1 || !Buffer::HasInstance(args[0])) {
-    return ThrowException(Exception::TypeError(String::New("Invalid arguments: Expected (Buffer)")));
+  if (args.Length() < 1 || (!args[0]->IsString() && !Buffer::HasInstance(args[0]))) {
+    return ThrowException(Exception::TypeError(String::New("DB.del() expects key")));
   }
 
-  leveldb::Slice key = JsToSlice(args[0]);
+  // Use temporary WriteBatch to implement Del
+  WriteBatch *writeBatch = new WriteBatch();
+  leveldb::Slice key = JsToSlice(args[0], writeBatch->strings);
+  writeBatch->wb.Delete(key);
   
-  leveldb::WriteBatch *writeBatch = new leveldb::WriteBatch();
-  writeBatch->Delete(key);
-
   int pos = 1;
 
   // Optional write options
@@ -266,11 +264,8 @@ Handle<Value> DB::Del(const Arguments& args) {
     pos++;
   }
   
-  // Pass parameters to async function
   WriteParams *params = new WriteParams(self, writeBatch, options, callback);
   params->disposeWriteBatch = true;
-  
-  // Use Write to implement Del
   EIO_BeforeWrite(params);
 
   return args.This();
@@ -295,8 +290,7 @@ Handle<Value> DB::Write(const Arguments& args) {
     return ThrowException(Exception::TypeError(String::New("DB.write() expects a WriteBatch object")));
   }
   Local<Object> writeBatchObject = Object::Cast(*args[0]);
-  WriteBatch* writeBatchWrapper = ObjectWrap::Unwrap<WriteBatch>(writeBatchObject);
-  leveldb::WriteBatch* writeBatch = writeBatchWrapper->wb;
+  WriteBatch* writeBatch = ObjectWrap::Unwrap<WriteBatch>(writeBatchObject);
   
   int pos = 1;
 
@@ -331,13 +325,15 @@ int DB::EIO_Write(eio_req *req) {
 
   // Do the actual work
   if (self->db != NULL) {
-    params->status = self->db->Write(params->options, params->writeBatch);
+    params->status = self->db->Write(params->options, &params->writeBatch->wb);
   }
 
   return 0;
 }
 
 int DB::EIO_AfterWrite(eio_req *req) {
+  HandleScope scope;
+  
   WriteParams *params = static_cast<WriteParams*>(req->data);
   params->Callback();
 
@@ -358,8 +354,8 @@ Handle<Value> DB::Get(const Arguments& args) {
   HandleScope scope;
 
   // Check args
-  if (!(args.Length() == 2 && args[0]->IsObject() && Buffer::HasInstance(args[1]))) {
-    return ThrowException(Exception::TypeError(String::New("Invalid arguments: Expected (Object, Buffer)")));
+  if (args.Length() < 2 || !args[0]->IsObject() || !Buffer::HasInstance(args[1])) {
+    return ThrowException(Exception::TypeError(String::New("DB.get() expects (Object, Buffer)")));
   }
 
   DB* self = ObjectWrap::Unwrap<DB>(args.This());
@@ -369,12 +365,12 @@ Handle<Value> DB::Get(const Arguments& args) {
   
   leveldb::ReadOptions options = JsToReadOptions(args[0]);
   leveldb::Slice key = JsToSlice(args[1]);
-
+  
   // Read value from database
   std::string value;
   leveldb::Status status = self->db->Get(options, key, &value);
   if (!status.ok()) return ThrowException(Exception::Error(String::New(status.ToString().c_str())));
-
+  
   // Convert string to real JS Buffer
   int length = value.length();
   Buffer *slowBuffer = Buffer::New(length);
