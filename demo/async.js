@@ -23,21 +23,23 @@ db.open(path, {create_if_missing: true, paranoid_checks: true}, function(err) {
         
         // Getting
         console.log("\nGetting...");
-        var val = db.get({}, new Buffer(key)).toString();
-        if (val != value) throw "Expected: " + value + ", got: " + val;
-        console.log("ok");
-        
-        // Deleting
-        console.log("\nDeleting...");
-        db.del(key, function(err) {
+        db.get(key, function(err, val) {
             if (err) throw err;
+            if (val != value) throw "Expected: " + value + ", got: " + val;
             console.log("ok");
-            
-            // Closing
-            console.log("\nClosing...")
-            db.close(function(err) {
+
+            // Deleting
+            console.log("\nDeleting...");
+            db.del(key, function(err) {
                 if (err) throw err;
-                console.log('ok');
+                console.log("ok");
+            
+                // Closing
+                console.log("\nClosing...")
+                db.close(function(err) {
+                    if (err) throw err;
+                    console.log('ok');
+                });
             });
         });
     });

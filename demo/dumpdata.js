@@ -4,7 +4,7 @@ var leveldb = require('../build/default/leveldb.node'),
 
 var path = "/tmp/large.db";
 
-var index = 400000;
+var index = 0;
 var in_flight = 0;
 var found = 0;
 var not_found = 0;
