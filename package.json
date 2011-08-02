@@ -1,0 +1,22 @@
+{
+	"name": "node-leveldb",
+	"description": "leveldb bindings for node",
+	"tags": ["database", "cache"],
+	"author": "Tim Caswell <tim@creationix.com>",
+	"version": "0.1.0",
+	"lib": "./build/default",
+	"main": "./build/default/leveldb.node",
+	"scripts": {
+		"preinstall": "node-waf configure build"
+	},
+	"repository": {
+		"type": "git",
+		"url": "http://github.com/creationix/node-leveldb.git"
+	},
+	"bugs": {
+		"web": "http://github.com/creationix/node-leveldb/issues"
+	},
+	"contributors": [
+	    "Randall Leeds <randall.leeds@gmail.com> (http://claimid.com/randallleeds)"
+	]
+}
