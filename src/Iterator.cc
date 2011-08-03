@@ -19,6 +19,8 @@ void Iterator::Init(Handle<Object> target) {
   persistent_function_template = Persistent<FunctionTemplate>::New(local_function_template);
   persistent_function_template->InstanceTemplate()->SetInternalFieldCount(1);
   persistent_function_template->SetClassName(String::NewSymbol("Iterator"));
+  
+  NODE_SET_PROTOTYPE_METHOD(persistent_function_template, "valid", Valid);
 
   target->Set(String::NewSymbol("Iterator"), persistent_function_template->GetFunction());
 }
