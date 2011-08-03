@@ -3,7 +3,7 @@
 	"description": "leveldb bindings for node",
 	"tags": ["database", "cache"],
 	"author": "Tim Caswell <tim@creationix.com>",
-	"version": "0.1.0",
+	"version": "0.1.1",
 	"lib": "./build/default",
 	"main": "./build/default/leveldb.node",
 	"scripts": {
@@ -17,6 +17,7 @@
 		"web": "http://github.com/creationix/node-leveldb/issues"
 	},
 	"contributors": [
-	    "Randall Leeds <randall.leeds@gmail.com> (http://claimid.com/randallleeds)"
+	    "Randall Leeds <randall.leeds@gmail.com> (http://claimid.com/randallleeds)",
+	    "Damon Oehlman <damon.oehlman@sidelab.com> (http://www.sidelab.com/)"
 	]
 }
