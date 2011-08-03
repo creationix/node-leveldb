@@ -6,6 +6,7 @@ using namespace node_leveldb;
 Persistent<FunctionTemplate> Iterator::persistent_function_template;
 
 Iterator::Iterator() {
+  this->it = NULL;
 }
 
 Iterator::~Iterator() {
@@ -26,7 +27,20 @@ Handle<Value> Iterator::New(const Arguments& args) {
   HandleScope scope;
   
   Iterator* iterator = new Iterator();
+  
+  if (args.Length() >= 1 && args[0]->IsExternal()) {
+      iterator->it = (leveldb::Iterator*) Local<External>::Cast(args[0])->Value();
+  } // if
+  
   iterator->Wrap(args.This());
   
   return args.This();
+}
+
+Handle<Value> Iterator::Valid(const Arguments& args) {
+    HandleScope scope;
+
+    Iterator* self = ObjectWrap::Unwrap<Iterator>(args.This());
+    
+    return self->it->Valid() ? True() : False();
 }
