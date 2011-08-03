@@ -174,15 +174,7 @@ Handle<Value> DB::Get(const Arguments& args) {
   leveldb::Status status = self->db->Get(options, key, &value);
   if (!status.ok()) return ThrowException(Exception::Error(String::New(status.ToString().c_str())));
 
-  // Convert string to real JS Buffer
-  int length = value.length();
-  Buffer *slowBuffer = Buffer::New(length);
-  memcpy(BufferData(slowBuffer), value.c_str(), length);
-  Local<Function> bufferConstructor = Local<Function>::Cast(Context::GetCurrent()->Global()->Get(String::New("Buffer")));
-  Handle<Value> constructorArgs[3] = { slowBuffer->handle_, Integer::New(length), Integer::New(0) };
-  Local<Object> actualBuffer = bufferConstructor->NewInstance(3, constructorArgs);
-
-  return scope.Close(actualBuffer);
+  return scope.Close(Bufferize(value));
 }
 
 Handle<Value> DB::Write(const Arguments& args) {

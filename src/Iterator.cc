@@ -20,7 +20,16 @@ void Iterator::Init(Handle<Object> target) {
   persistent_function_template->InstanceTemplate()->SetInternalFieldCount(1);
   persistent_function_template->SetClassName(String::NewSymbol("Iterator"));
   
+
   NODE_SET_PROTOTYPE_METHOD(persistent_function_template, "valid", Valid);
+  NODE_SET_PROTOTYPE_METHOD(persistent_function_template, "seekToFirst", SeekToFirst);
+  NODE_SET_PROTOTYPE_METHOD(persistent_function_template, "seekToLast", SeekToLast);
+  NODE_SET_PROTOTYPE_METHOD(persistent_function_template, "seek", Seek);
+  NODE_SET_PROTOTYPE_METHOD(persistent_function_template, "next", Next);
+  NODE_SET_PROTOTYPE_METHOD(persistent_function_template, "prev", Prev);
+  NODE_SET_PROTOTYPE_METHOD(persistent_function_template, "key", key);
+  NODE_SET_PROTOTYPE_METHOD(persistent_function_template, "value", value);
+  NODE_SET_PROTOTYPE_METHOD(persistent_function_template, "status", status);
 
   target->Set(String::NewSymbol("Iterator"), persistent_function_template->GetFunction());
 }
@@ -45,4 +54,62 @@ Handle<Value> Iterator::Valid(const Arguments& args) {
     Iterator* self = ObjectWrap::Unwrap<Iterator>(args.This());
     
     return self->it->Valid() ? True() : False();
+}
+
+Handle<Value> Iterator::SeekToFirst(const Arguments& args) {
+    ObjectWrap::Unwrap<Iterator>(args.This())->it->SeekToFirst();
+    
+    return Undefined();
+}
+
+Handle<Value> Iterator::SeekToLast(const Arguments& args) {
+    ObjectWrap::Unwrap<Iterator>(args.This())->it->SeekToLast();
+    
+    return Undefined();
+}
+
+Handle<Value> Iterator::Seek(const Arguments& args) {
+    HandleScope scope;
+
+    // Check args
+    if (!(args.Length() == 1 && Buffer::HasInstance(args[0]))) {
+      return ThrowException(Exception::TypeError(String::New("Invalid arguments: Expected (Buffer)")));
+    } // if
+    
+    leveldb::Slice key = JsToSlice(args[0]);
+    ObjectWrap::Unwrap<Iterator>(args.This())->it->Seek(key);
+
+    return Undefined();
+}
+
+Handle<Value> Iterator::Next(const Arguments& args) {
+    ObjectWrap::Unwrap<Iterator>(args.This())->it->Next();
+    
+    return Undefined();
+}
+
+Handle<Value> Iterator::Prev(const Arguments& args) {
+    ObjectWrap::Unwrap<Iterator>(args.This())->it->Prev();
+    
+    return Undefined();
+}
+
+Handle<Value> Iterator::key(const Arguments& args) {
+    HandleScope scope;
+    leveldb::Slice k = ObjectWrap::Unwrap<Iterator>(args.This())->it->key();
+    
+    return scope.Close(Bufferize(k.ToString()));
+}
+
+Handle<Value> Iterator::value(const Arguments& args) {
+    HandleScope scope;
+    leveldb::Slice v = ObjectWrap::Unwrap<Iterator>(args.This())->it->value();
+    
+    return scope.Close(Bufferize(v.ToString()));
+}
+
+Handle<Value> Iterator::status(const Arguments& args) {
+    leveldb::Status status = ObjectWrap::Unwrap<Iterator>(args.This())->it->status();
+    
+    return processStatus(status);
 }

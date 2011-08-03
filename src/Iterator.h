@@ -24,6 +24,15 @@ class Iterator : ObjectWrap {
     static Handle<Value> New(const Arguments& args);
     
     static Handle<Value> Valid(const Arguments& args);
+    static Handle<Value> SeekToFirst(const Arguments& args);
+    static Handle<Value> SeekToLast(const Arguments& args);
+    static Handle<Value> Seek(const Arguments& args);
+    static Handle<Value> Next(const Arguments& args);
+    static Handle<Value> Prev(const Arguments& args);
+    
+    static Handle<Value> key(const Arguments& args);
+    static Handle<Value> value(const Arguments& args);
+    static Handle<Value> status(const Arguments& args);
 };
 
 } // node_leveldb
