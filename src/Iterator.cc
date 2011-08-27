@@ -10,6 +10,11 @@ Iterator::Iterator() {
 }
 
 Iterator::~Iterator() {
+    // cleanup the iterator instance
+    if (this->it) {
+      delete this->it;
+      this->it = NULL;
+    } // if
 }
 
 void Iterator::Init(Handle<Object> target) {
