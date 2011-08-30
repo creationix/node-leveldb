@@ -2,7 +2,7 @@
    "name": "leveldb",
    "description": "Bindings for using LevelDB through node.",
    "homepage": "https://github.com/my8bird/node-leveldb",
-   "version": "0.1.0",
+   "version": "0.2.0",
    "author": {
       "name": "Nathan Landis", 
       "email": "my8bird@gmail.com"},
