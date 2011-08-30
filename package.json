@@ -1,12 +1,16 @@
 {
    "name": "leveldb",
+	"tags": ["database", "cache"],
    "description": "Bindings for using LevelDB through node.",
    "homepage": "https://github.com/my8bird/node-leveldb",
-   "version": "0.2.0",
+   "version": "0.3.0",
    "author": {
       "name": "Nathan Landis", 
       "email": "my8bird@gmail.com"},
    "main": "lib",
+	"scripts": {
+		"preinstall": "node-waf configure build"
+	},
    "repository" : { 
       "type" : "git",
       "url" : "https://github.com/my8bird/node-leveldb.git"
@@ -15,5 +19,9 @@
    "bugs" : { "web" : "https://github.com/my8bird/node-leveldb/issues" },
    "dependencies": 
    {
-   }
+   },
+	"contributors": [
+	    "Randall Leeds <randall.leeds@gmail.com> (http://claimid.com/randallleeds)",
+	    "Damon Oehlman <damon.oehlman@sidelab.com> (http://www.sidelab.com/)"
+	]
 }
