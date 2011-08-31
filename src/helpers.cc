@@ -74,6 +74,15 @@ Handle<Value> processStatus(leveldb::Status status) {
   return ThrowException(Exception::Error(String::New(status.ToString().c_str())));
 }
 
+Local<Object> Bufferize(std::string value) {
+    int length = value.length();
+    Buffer *slowBuffer = Buffer::New(length);
+    memcpy(BufferData(slowBuffer), value.c_str(), length);
+    Local<Function> bufferConstructor = Local<Function>::Cast(Context::GetCurrent()->Global()->Get(String::New("Buffer")));
+    Handle<Value> constructorArgs[3] = { slowBuffer->handle_, Integer::New(length), Integer::New(0) };
+    
+    return bufferConstructor->NewInstance(3, constructorArgs);
+}
 
 char* BufferData(Buffer *b) {
   return Buffer::Data(b->handle_);

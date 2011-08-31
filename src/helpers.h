@@ -25,6 +25,7 @@ namespace node_leveldb {
   Handle<Value> processStatus(leveldb::Status status);
 
   // Helpers to work with buffers
+  Local<Object> Bufferize(std::string value);
   char* BufferData(Buffer *b);
   size_t BufferLength(Buffer *b);
   char* BufferData(Handle<Object> buf_obj);

@@ -1,4 +1,5 @@
 #include "DB.h"
+#include "Iterator.h"
 #include "WriteBatch.h"
 
 #include <node_buffer.h>
@@ -421,7 +422,23 @@ int DB::EIO_AfterRead(eio_req *req) {
 
 Handle<Value> DB::NewIterator(const Arguments& args) {
   HandleScope scope;
-  return ThrowException(Exception::Error(String::New("TODO: IMPLEMENT ME")));
+
+  if (!(args.Length() == 1 && args[0]->IsObject())) {
+      return ThrowException(Exception::TypeError(String::New("Invalid arguments: Expected (Object)")));
+  } // if
+  
+  DB* self = ObjectWrap::Unwrap<DB>(args.This());
+  leveldb::ReadOptions options = JsToReadOptions(args[0]);
+  leveldb::Iterator* it = self->db->NewIterator(options);
+
+  // DJO: Don't like writing code I don't understand, but I found this is how the node-gd library
+  // converts an actual instance to it's binding representation
+  // https://github.com/taggon/node-gd/blob/master/gd_bindings.cc#L79
+  // Guess, I'll understand it soon...
+  Local<Value> _arg_ = External::New(it);
+  Persistent<Object> _it_(Iterator::persistent_function_template->GetFunction()->NewInstance(1, &_arg_));
+  
+  return scope.Close(_it_);
 }
 
 Handle<Value> DB::GetSnapshot(const Arguments& args) {
