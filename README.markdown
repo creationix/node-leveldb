@@ -8,6 +8,10 @@ While implementing nStore, I realized there are a couple things that V8 and node
 
 Since LevelDB provides good primitives like MVCC and binary support (It was designed to back IndexDB in the Chrome browser), then it can be used as a base to implement things like CouchDB.
 
+## TODO
+
+ 1. Trun Iterator code to be async
+
 ## Status
 
 This project is still under heavy development in my free-time.  It was started by a long night where I couldn't sleep.  I am not a C++ coder and am learning as I go.

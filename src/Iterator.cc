@@ -1,5 +1,6 @@
 #include "Iterator.h"
 #include "helpers.h"
+#include "iostream"
 
 using namespace node_leveldb;
 
@@ -76,13 +77,10 @@ Handle<Value> Iterator::SeekToLast(const Arguments& args) {
 Handle<Value> Iterator::Seek(const Arguments& args) {
     HandleScope scope;
 
-    // Check args
-    if (!(args.Length() == 2 && Buffer::HasInstance(args[1]))) {
-      return ThrowException(Exception::TypeError(String::New("Invalid arguments: Expected (Buffer)")));
-    } // if
-    
-    //leveldb::Slice key = JsToSlice(args[0], &self->strings);
-    //ObjectWrap::Unwrap<Iterator>(args.This())->it->Seek(key);
+    std::vector<std::string> strings;
+
+    leveldb::Slice key = JsToSlice(args[0], &strings);
+    ObjectWrap::Unwrap<Iterator>(args.This())->it->Seek(key);
 
     return Undefined();
 }
@@ -118,3 +116,4 @@ Handle<Value> Iterator::status(const Arguments& args) {
     
     return processStatus(status);
 }
+

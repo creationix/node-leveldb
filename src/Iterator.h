@@ -37,4 +37,5 @@ class Iterator : ObjectWrap {
 
 } // node_leveldb
 
-#endif ITERATOR_H_
+#endif
+

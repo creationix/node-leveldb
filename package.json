@@ -3,7 +3,7 @@
 	"tags": ["database", "cache"],
    "description": "Bindings for using LevelDB through node.",
    "homepage": "https://github.com/my8bird/node-leveldb",
-   "version": "0.3.0",
+   "version": "0.3.5",
    "author": {
       "name": "Nathan Landis", 
       "email": "my8bird@gmail.com"},

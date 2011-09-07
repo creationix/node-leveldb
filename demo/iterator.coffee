@@ -38,12 +38,13 @@ d.addCallback () ->
 
    iterator.seekToFirst()
 
-
    while iterator.valid()
        key = iterator.key().toString('utf8')
        
        if lastKey && lastKey > key
            console.log('found sorting error')
+       else
+          console.log(key)
        
        lastKey = key
        readCount++
@@ -53,21 +54,18 @@ d.addCallback () ->
    console.log('read sequential ' + readCount + ' db contents in ' + (Date.now() - start) + 'ms')
 
 d.addCallback () ->
-   console.log "Seek is broken"
-   return
-   console.log '1'
+   console.log 'Start Seek test'
    iterator = db.newIterator({})
-   console.log '2'
 
    for i in [0 .. 100]
        testUUID = uuid()
-       iterator.seek(new Buffer(testUUID))
+       iterator.seek("" + testUUID)
        
        console.log('looking for first key after: ' + testUUID)
        
        # if we found something the report
        if (iterator.valid())
-           console.log('FOUND: ' + iterator.key())
+           console.log('FOUND: ' + iterator.key().toString('utf-8'))
 
 
 d.addCallback () ->
