@@ -12,9 +12,6 @@ using namespace node;
 namespace node_leveldb {
 
 class Iterator : ObjectWrap {
-  private:
-    leveldb::Iterator* it;
-    
   public:
     Iterator();
     ~Iterator();
@@ -33,6 +30,28 @@ class Iterator : ObjectWrap {
     static Handle<Value> key(const Arguments& args);
     static Handle<Value> value(const Arguments& args);
     static Handle<Value> status(const Arguments& args);
+
+  private:
+    leveldb::Iterator* it;    
+    
+    struct SeekParams {
+       SeekParams(Iterator* it, leveldb::Slice k, Handle<Function> cb) {
+          self = it;
+          key = k;
+          callback = Persistent<Function>::New(cb);
+       }
+
+       virtual void Callback(Handle<Value> result = Handle<Value>());
+
+       Iterator* self;
+       leveldb::Slice key;
+       Persistent<Function> callback;
+       
+    };
+
+    static void EIO_BeforeSeek(SeekParams *params);
+    static int EIO_Seek(eio_req *req);
+    static int EIO_AfterSeek(eio_req *req);
 };
 
 } // node_leveldb

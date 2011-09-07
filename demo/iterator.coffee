@@ -43,8 +43,6 @@ d.addCallback () ->
        
        if lastKey && lastKey > key
            console.log('found sorting error')
-       else
-          console.log(key)
        
        lastKey = key
        readCount++
@@ -55,18 +53,19 @@ d.addCallback () ->
 
 d.addCallback () ->
    console.log 'Start Seek test'
+
+   deferred = new td.Deferred()
    iterator = db.newIterator({})
+   testUUID = uuid()
+   iterator.seek "" + testUUID, () ->
+      console.log('looking for first key after: ' + testUUID)
+      # if we found something the report
+      if (iterator.valid())
+         console.log('FOUND: ' + iterator.key().toString('utf-8'))
 
-   for i in [0 .. 100]
-       testUUID = uuid()
-       iterator.seek("" + testUUID)
-       
-       console.log('looking for first key after: ' + testUUID)
-       
-       # if we found something the report
-       if (iterator.valid())
-           console.log('FOUND: ' + iterator.key().toString('utf-8'))
+      deferred.callback()
 
+   deferred
 
 d.addCallback () ->
    console.log "success"

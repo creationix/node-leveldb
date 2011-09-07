@@ -75,14 +75,42 @@ Handle<Value> Iterator::SeekToLast(const Arguments& args) {
 }
 
 Handle<Value> Iterator::Seek(const Arguments& args) {
+    Iterator* self = ObjectWrap::Unwrap<Iterator>(args.This());
     HandleScope scope;
 
+    // XXX: Throw away vector that makes JsToSlice work.
+    //      the helper needs to be updated.
     std::vector<std::string> strings;
 
     leveldb::Slice key = JsToSlice(args[0], &strings);
-    ObjectWrap::Unwrap<Iterator>(args.This())->it->Seek(key);
+    self->it->Seek(key);
+    Local<Function> callback;
+    callback = Local<Function>::Cast(args[1]);
+
+    SeekParams *params = new SeekParams(self, key, callback);
+    EIO_BeforeSeek(params);
 
     return Undefined();
+}
+
+void Iterator::EIO_BeforeSeek(SeekParams *params) {
+   eio_custom(EIO_Seek, EIO_PRI_DEFAULT, EIO_AfterSeek, params);
+}
+
+int Iterator::EIO_Seek(eio_req *req) {
+   SeekParams *params = static_cast<SeekParams*>(req->data);
+   Iterator *self = params->self;
+
+   self->it->Seek(params->key);
+
+   return 0;
+}
+
+int Iterator::EIO_AfterSeek(eio_req *req) {
+   SeekParams *params = static_cast<SeekParams*>(req->data);
+   params->Callback();
+   delete params;
+   return 0;
 }
 
 Handle<Value> Iterator::Next(const Arguments& args) {
@@ -117,3 +145,20 @@ Handle<Value> Iterator::status(const Arguments& args) {
     return processStatus(status);
 }
 
+void Iterator::SeekParams::Callback(Handle<Value> result) {
+  if (!callback.IsEmpty()) {
+    TryCatch try_catch;
+      // no error, callback with no arguments, or result as second argument
+      if (result.IsEmpty()) {
+        callback->Call(self->handle_, 0, NULL);
+      } else {
+        Handle<Value> undef = Undefined();
+        Handle<Value> argv[] = { undef, result };
+        callback->Call(self->handle_, 2, argv);
+        }
+    if (try_catch.HasCaught()) {
+        FatalException(try_catch);
+    }
+  }
+}
+ 
