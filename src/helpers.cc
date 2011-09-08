@@ -2,8 +2,8 @@
 
 namespace node_leveldb {
 
-leveldb::Options JsToOptions(Local<Value> val) {
-  // Copy the v8 options over an leveldb options object
+leveldb::Options JsToOptions(Handle<Value> val) {
+  HandleScope scope;
   Local<Object> obj = Object::Cast(*val);
   leveldb::Options options;
   if (obj->Has(String::New("create_if_missing"))) {
@@ -30,7 +30,8 @@ leveldb::Options JsToOptions(Local<Value> val) {
   return options;
 }
 
-leveldb::ReadOptions JsToReadOptions(Local<Value> val) {
+leveldb::ReadOptions JsToReadOptions(Handle<Value> val) {
+  HandleScope scope;
   leveldb::ReadOptions options;
   Local<Object> obj = Object::Cast(*val);
   if (obj->Has(String::New("verify_checksums"))) {
@@ -42,7 +43,8 @@ leveldb::ReadOptions JsToReadOptions(Local<Value> val) {
   return options;
 }
 
-leveldb::WriteOptions JsToWriteOptions(Local<Value> val) {
+leveldb::WriteOptions JsToWriteOptions(Handle<Value> val) {
+  HandleScope scope;
   leveldb::WriteOptions options;
   Local<Object> obj = Object::Cast(*val);
   if (obj->Has(String::New("sync"))) {
@@ -51,10 +53,20 @@ leveldb::WriteOptions JsToWriteOptions(Local<Value> val) {
   return options;
 }
 
-leveldb::Slice JsToSlice(Local<Value> val) {
-  Local<Object> obj = Object::Cast(*val);
-  leveldb::Slice slice(BufferData(obj), BufferLength(obj));
-  return slice;
+leveldb::Slice JsToSlice(Handle<Value> val, std::vector<std::string> *strings) {
+  HandleScope scope;
+  if (val->IsString() && strings != NULL) {
+    std::string str(*String::Utf8Value(val));
+    strings->push_back(str);
+    return leveldb::Slice(str.data(), str.length());
+  }
+  else if (Buffer::HasInstance(val)) {
+    Local<Object> obj = Object::Cast(*val);
+    return leveldb::Slice(BufferData(obj), BufferLength(obj));
+  }
+  else {
+    return leveldb::Slice();
+  }
 }
 
 Handle<Value> processStatus(leveldb::Status status) {
@@ -62,6 +74,15 @@ Handle<Value> processStatus(leveldb::Status status) {
   return ThrowException(Exception::Error(String::New(status.ToString().c_str())));
 }
 
+Local<Object> Bufferize(std::string value) {
+    int length = value.length();
+    Buffer *slowBuffer = Buffer::New(length);
+    memcpy(BufferData(slowBuffer), value.c_str(), length);
+    Local<Function> bufferConstructor = Local<Function>::Cast(Context::GetCurrent()->Global()->Get(String::New("Buffer")));
+    Handle<Value> constructorArgs[3] = { slowBuffer->handle_, Integer::New(length), Integer::New(0) };
+    
+    return bufferConstructor->NewInstance(3, constructorArgs);
+}
 
 char* BufferData(Buffer *b) {
   return Buffer::Data(b->handle_);
@@ -71,11 +92,11 @@ size_t BufferLength(Buffer *b) {
   return Buffer::Length(b->handle_);
 }
 
-char* BufferData(Local<Object> buf_obj) {
+char* BufferData(Handle<Object> buf_obj) {
   return Buffer::Data(buf_obj);
 }
 
-size_t BufferLength(Local<Object> buf_obj) {
+size_t BufferLength(Handle<Object> buf_obj) {
   return Buffer::Length(buf_obj);
 }
 
