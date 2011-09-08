@@ -63,15 +63,51 @@ Handle<Value> Iterator::Valid(const Arguments& args) {
 }
 
 Handle<Value> Iterator::SeekToFirst(const Arguments& args) {
-    ObjectWrap::Unwrap<Iterator>(args.This())->it->SeekToFirst();
+    Iterator* self = ObjectWrap::Unwrap<Iterator>(args.This());
+    Local<Function> callback;
+    callback = Local<Function>::Cast(args[0]);
+
+    SeekParams *params = new SeekParams(self, leveldb::Slice(), callback);
+    EIO_BeforeSeekToFirst(params);
     
     return Undefined();
 }
 
+void Iterator::EIO_BeforeSeekToFirst(SeekParams *params) {
+   eio_custom(EIO_SeekToFirst, EIO_PRI_DEFAULT, EIO_AfterSeek, params);
+}
+
+int Iterator::EIO_SeekToFirst(eio_req *req) {
+   SeekParams *params = static_cast<SeekParams*>(req->data);
+   Iterator *self = params->self;
+
+   self->it->SeekToFirst();
+
+   return 0;
+}
+
 Handle<Value> Iterator::SeekToLast(const Arguments& args) {
-    ObjectWrap::Unwrap<Iterator>(args.This())->it->SeekToLast();
+    Iterator* self = ObjectWrap::Unwrap<Iterator>(args.This());
+    Local<Function> callback;
+    callback = Local<Function>::Cast(args[0]);
+
+    SeekParams *params = new SeekParams(self, leveldb::Slice(), callback);
+    EIO_BeforeSeekToLast(params);
     
     return Undefined();
+}
+
+void Iterator::EIO_BeforeSeekToLast(SeekParams *params) {
+   eio_custom(EIO_SeekToLast, EIO_PRI_DEFAULT, EIO_AfterSeek, params);
+}
+
+int Iterator::EIO_SeekToLast(eio_req *req) {
+   SeekParams *params = static_cast<SeekParams*>(req->data);
+   Iterator *self = params->self;
+
+   self->it->SeekToLast();
+
+   return 0;
 }
 
 Handle<Value> Iterator::Seek(const Arguments& args) {
@@ -83,7 +119,6 @@ Handle<Value> Iterator::Seek(const Arguments& args) {
     std::vector<std::string> strings;
 
     leveldb::Slice key = JsToSlice(args[0], &strings);
-    self->it->Seek(key);
     Local<Function> callback;
     callback = Local<Function>::Cast(args[1]);
 

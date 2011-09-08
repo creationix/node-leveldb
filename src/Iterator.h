@@ -39,6 +39,15 @@ class Iterator : ObjectWrap {
           self = it;
           key = k;
           callback = Persistent<Function>::New(cb);
+
+          self->Ref();
+          ev_ref(EV_DEFAULT_UC);
+       }
+
+       ~SeekParams() {
+          self->Unref();
+          ev_unref(EV_DEFAULT_UC);
+          callback.Dispose();
        }
 
        virtual void Callback(Handle<Value> result = Handle<Value>());
@@ -51,6 +60,13 @@ class Iterator : ObjectWrap {
 
     static void EIO_BeforeSeek(SeekParams *params);
     static int EIO_Seek(eio_req *req);
+
+    static void EIO_BeforeSeekToLast(SeekParams *params);
+    static int EIO_SeekToLast(eio_req *req);
+
+    static void EIO_BeforeSeekToFirst(SeekParams *params);
+    static int EIO_SeekToFirst(eio_req *req);
+
     static int EIO_AfterSeek(eio_req *req);
 };
 

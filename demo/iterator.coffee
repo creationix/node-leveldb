@@ -35,21 +35,24 @@ d.addCallback () ->
 
    # iterate over the test database
    iterator = db.newIterator({})
+   deferred = new td.Deferred()
 
-   iterator.seekToFirst()
+   iterator.seekToFirst () ->
+      while iterator.valid()
+          key = iterator.key().toString('utf8')
+          
+          if lastKey && lastKey > key
+              console.log('found sorting error')
+          
+          lastKey = key
+          readCount++
 
-   while iterator.valid()
-       key = iterator.key().toString('utf8')
-       
-       if lastKey && lastKey > key
-           console.log('found sorting error')
-       
-       lastKey = key
-       readCount++
+          iterator.next()
 
-       iterator.next()
+      console.log('read sequential ' + readCount + ' db contents in ' + (Date.now() - start) + 'ms')
+      deferred.callback()
 
-   console.log('read sequential ' + readCount + ' db contents in ' + (Date.now() - start) + 'ms')
+   deferred
 
 d.addCallback () ->
    console.log 'Start Seek test'
@@ -68,7 +71,7 @@ d.addCallback () ->
    deferred
 
 d.addCallback () ->
-   console.log "success"
+   console.log "Success"
 
 d.addErrback (err) ->
    console.log err.message.stack
@@ -76,4 +79,5 @@ d.addErrback (err) ->
 d.addBoth () ->
    db.close()
    DB.destroyDB(path, {})
+   console.log "Database removed and cleaned up."
 
